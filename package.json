@@ -1,0 +1,27 @@
+{
+	"name": "amp_csr",
+	"version": "1.0.0",
+	"description": "",
+	"homepage": "https://github.com/alifaizan786-op/AMP_CSR#readme",
+	"bugs": {
+		"url": "https://github.com/alifaizan786-op/AMP_CSR/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alifaizan786-op/AMP_CSR.git"
+	},
+	"license": "ISC",
+	"author": "",
+	"type": "commonjs",
+	"main": "index.js",
+	"scripts": {
+		"dev": "concurrently \"npm run server\" \"npm run client\"",
+		"server": "npm run dev --prefix server",
+		"client": "npm run dev --prefix client",
+		"install-all": "npm i && npm i --prefix server && npm i --prefix client",
+		"seed": "npm run seed --prefix server"
+	},
+	"devDependencies": {
+		"concurrently": "^10.0.6"
+	}
+}
