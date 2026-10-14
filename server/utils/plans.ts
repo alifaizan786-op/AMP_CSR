@@ -5,4 +5,6 @@ const PLANS = {
 	ultimate: { name: 'Ultimate', price: 3999 },
 };
 
-module.exports = PLANS;
+export type PlanKey = keyof typeof PLANS;
+
+export default PLANS;

@@ -1,9 +1,64 @@
-const { faker } = require('@faker-js/faker');
-const { Customer } = require('../models');
-const PLANS = require('../utils/plans');
+import { faker } from '@faker-js/faker';
+import { Types } from 'mongoose';
+import { Customer } from '../models';
+import PLANS, { PlanKey } from '../utils/plans';
 
 // Fixed seed so every run produces the same customers, which keeps demos predictable
 faker.seed(42);
+
+type SubscriptionStatus = 'active' | 'overdue' | 'cancelled';
+type CustomerDocument = InstanceType<typeof Customer>;
+type VehicleDocument = CustomerDocument['vehicles'][number];
+
+interface SeedSubscription {
+	plan: PlanKey;
+	price: number;
+	status: SubscriptionStatus;
+	startDate: Date;
+	nextBillingDate?: Date;
+	cancelledAt?: Date;
+	cancelReason?: string;
+}
+
+interface SeedVehicle {
+	plate: string;
+	make: string;
+	model: string;
+	year: number;
+	color: string;
+	subscription?: SeedSubscription;
+}
+
+// note and singleWashes only drive the seed; they aren't saved on the customer
+interface SeedCustomer {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	vehicles: SeedVehicle[];
+	note?: string;
+	singleWashes?: number;
+}
+
+interface SeedPurchase {
+	customer: Types.ObjectId;
+	vehicleId?: Types.ObjectId;
+	vehiclePlate?: string;
+	type: 'membership' | 'single_wash';
+	description: string;
+	amount: number;
+	status: 'paid' | 'failed';
+	failureReason?: string;
+	createdAt: Date;
+}
+
+interface SeedActivity {
+	customer: Types.ObjectId;
+	type: 'note' | 'change';
+	message: string;
+	author: string;
+	createdAt?: Date;
+}
 
 const SINGLE_WASH_PRICE = 1200;
 const AREA_CODES = [
@@ -26,7 +81,7 @@ const CANCEL_REASONS = [
 ];
 const FAILURE_REASONS = ['Card declined', 'Card expired', 'Insufficient funds'];
 // Curated pairs, since faker picks makes and models independently (e.g. "Ford Camry")
-const VEHICLES = [
+const VEHICLES: [string, string][] = [
 	['Toyota', 'Camry'],
 	['Toyota', 'RAV4'],
 	['Honda', 'Civic'],
@@ -55,22 +110,22 @@ const COLORS = [
 	'Beige',
 ];
 
-const monthsAgo = (months) => {
+const monthsAgo = (months: number): Date => {
 	const date = new Date();
 	date.setMonth(date.getMonth() - months);
 	return date;
 };
 
-const addMonths = (date, months) => {
+const addMonths = (date: Date, months: number): Date => {
 	const result = new Date(date);
 	result.setMonth(result.getMonth() + months);
 	return result;
 };
 
-const randomPhone = () =>
+const randomPhone = (): string =>
 	faker.helpers.arrayElement(AREA_CODES) + faker.string.numeric(7);
 
-const randomVehicle = () => {
+const randomVehicle = (): SeedVehicle => {
 	const [make, model] = faker.helpers.arrayElement(VEHICLES);
 	return {
 		plate: faker.string.alphanumeric({ length: 7, casing: 'upper' }),
@@ -81,10 +136,13 @@ const randomVehicle = () => {
 	};
 };
 
-const buildSubscription = (status, startedMonthsAgo) => {
-	const plan = faker.helpers.arrayElement(Object.keys(PLANS));
+const buildSubscription = (
+	status: SubscriptionStatus,
+	startedMonthsAgo: number,
+): SeedSubscription => {
+	const plan = faker.helpers.arrayElement(Object.keys(PLANS) as PlanKey[]);
 	const startDate = monthsAgo(startedMonthsAgo);
-	const subscription = {
+	const subscription: SeedSubscription = {
 		plan,
 		price: PLANS[plan].price,
 		status,
@@ -108,10 +166,16 @@ const buildSubscription = (status, startedMonthsAgo) => {
 };
 
 // One membership charge per month since signup; overdue members' latest charge failed
-const buildMembershipPurchases = (customer, vehicle) => {
-	const { subscription } = vehicle;
+const buildMembershipPurchases = (
+	customer: CustomerDocument,
+	vehicle: VehicleDocument,
+): SeedPurchase[] => {
+	const subscription = vehicle.subscription;
+	if (!subscription) return [];
+
+	const plan = subscription.plan as PlanKey;
 	const endDate = subscription.cancelledAt || new Date();
-	const purchases = [];
+	const purchases: SeedPurchase[] = [];
 
 	for (
 		let date = new Date(subscription.startDate);
@@ -123,7 +187,7 @@ const buildMembershipPurchases = (customer, vehicle) => {
 			vehicleId: vehicle._id,
 			vehiclePlate: vehicle.plate,
 			type: 'membership',
-			description: `${PLANS[subscription.plan].name} monthly membership`,
+			description: `${PLANS[plan].name} monthly membership`,
 			amount: subscription.price,
 			status: 'paid',
 			createdAt: new Date(date),
@@ -138,12 +202,16 @@ const buildMembershipPurchases = (customer, vehicle) => {
 	return purchases;
 };
 
-const buildSingleWashes = (customer, count) =>
-	Array.from({ length: count }, () => {
+const buildSingleWashes = (
+	customer: CustomerDocument,
+	count: number,
+): SeedPurchase[] => {
+	const purchases: SeedPurchase[] = [];
+	for (let i = 0; i < count; i++) {
 		const vehicle = customer.vehicles.length
 			? faker.helpers.arrayElement(customer.vehicles)
 			: null;
-		return {
+		purchases.push({
 			customer: customer._id,
 			vehicleId: vehicle?._id,
 			vehiclePlate: vehicle?.plate,
@@ -152,11 +220,13 @@ const buildSingleWashes = (customer, count) =>
 			amount: SINGLE_WASH_PRICE,
 			status: 'paid',
 			createdAt: faker.date.recent({ days: 180 }),
-		};
-	});
+		});
+	}
+	return purchases;
+};
 
 // Hand-built customers so each call scenario from the brief has a known account to demo
-const demoCustomers = () => [
+const demoCustomers = (): SeedCustomer[] => [
 	{
 		firstName: 'Jordan',
 		lastName: 'Miles',
@@ -233,27 +303,27 @@ const demoCustomers = () => [
 	},
 ];
 
-const randomCustomer = (index) => {
+const randomCustomer = (index: number): SeedCustomer => {
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
-	const vehicles = Array.from(
-		{ length: faker.number.int({ min: 0, max: 3 }) },
-		() => {
-			const vehicle = randomVehicle();
-			if (faker.datatype.boolean(0.7)) {
-				const status = faker.helpers.weightedArrayElement([
-					{ weight: 75, value: 'active' },
-					{ weight: 12, value: 'overdue' },
-					{ weight: 13, value: 'cancelled' },
-				]);
-				vehicle.subscription = buildSubscription(
-					status,
-					faker.number.int({ min: 1, max: 12 }),
-				);
-			}
-			return vehicle;
-		},
-	);
+
+	const vehicles: SeedVehicle[] = [];
+	const vehicleCount = faker.number.int({ min: 0, max: 3 });
+	for (let i = 0; i < vehicleCount; i++) {
+		const vehicle = randomVehicle();
+		if (faker.datatype.boolean(0.7)) {
+			const status = faker.helpers.weightedArrayElement<SubscriptionStatus>([
+				{ weight: 75, value: 'active' },
+				{ weight: 12, value: 'overdue' },
+				{ weight: 13, value: 'cancelled' },
+			]);
+			vehicle.subscription = buildSubscription(
+				status,
+				faker.number.int({ min: 1, max: 12 }),
+			);
+		}
+		vehicles.push(vehicle);
+	}
 
 	return {
 		firstName,
@@ -266,15 +336,15 @@ const randomCustomer = (index) => {
 	};
 };
 
-const buildSeedData = (randomCount = 50) => {
-	const rawCustomers = [
-		...demoCustomers(),
-		...Array.from({ length: randomCount }, (_, index) => randomCustomer(index)),
-	];
+export const buildSeedData = (randomCount = 50) => {
+	const rawCustomers: SeedCustomer[] = demoCustomers();
+	for (let i = 0; i < randomCount; i++) {
+		rawCustomers.push(randomCustomer(i));
+	}
 
-	const customers = [];
-	const purchases = [];
-	const activities = [];
+	const customers: CustomerDocument[] = [];
+	const purchases: SeedPurchase[] = [];
+	const activities: SeedActivity[] = [];
 
 	for (let i = 0; i < rawCustomers.length; i++) {
 		// Pull out the seed-only fields so they aren't saved on the customer
@@ -285,9 +355,9 @@ const buildSeedData = (randomCount = 50) => {
 		customers.push(customer);
 
 		for (let j = 0; j < customer.vehicles.length; j++) {
-			const vehicle = customer.vehicles[j];
-			if (vehicle.subscription)
-				purchases.push(...buildMembershipPurchases(customer, vehicle));
+			purchases.push(
+				...buildMembershipPurchases(customer, customer.vehicles[j]),
+			);
 		}
 		purchases.push(...buildSingleWashes(customer, singleWashes));
 
@@ -309,5 +379,3 @@ const buildSeedData = (randomCount = 50) => {
 
 	return { customers, purchases, activities };
 };
-
-module.exports = { buildSeedData };

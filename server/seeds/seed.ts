@@ -1,7 +1,7 @@
-require('dotenv').config();
-const db = require('../config/connection');
-const { Customer, Purchase, Activity } = require('../models');
-const { buildSeedData } = require('./seedData');
+import 'dotenv/config';
+import db from '../config/connection';
+import { Activity, Customer, Purchase } from '../models';
+import { buildSeedData } from './seedData';
 
 db.once('open', async () => {
 	try {
