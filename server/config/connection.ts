@@ -1,5 +1,5 @@
-import 'dotenv/config'
 import dns from 'dns';
+import 'dotenv/config';
 import mongoose from 'mongoose';
 
 // Node on some Windows networks can't resolve Atlas SRV records with the default DNS

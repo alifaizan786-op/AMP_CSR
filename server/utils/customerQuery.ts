@@ -1,5 +1,5 @@
 import { QueryFilter } from 'mongoose';
-import { CustomerData } from '../models/Customer';
+import { CustomerData } from '../models';
 import escapeRegex from './escapeRegex';
 
 export type CustomerStatus = CustomerData['status'];
@@ -22,7 +22,12 @@ export const buildSearchFilter = (
 	const pattern = new RegExp(escapeRegex(text), 'i');
 	const conditions: QueryFilter<CustomerData>[] = [
 		{ email: pattern },
-		{ 'vehicles.plate': new RegExp(escapeRegex(text.replace(/\s/g, '')), 'i') },
+		{
+			'vehicles.plate': new RegExp(
+				escapeRegex(text.replace(/[\s-]/g, '')),
+				'i',
+			),
+		},
 	];
 
 	// Phones are stored as digits only, so compare digits only.

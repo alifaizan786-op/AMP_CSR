@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
 import { isValidObjectId, QueryFilter } from 'mongoose';
-import { Activity, Customer, Purchase } from '../models';
-import { CustomerData } from '../models/Customer';
-import { buildSearchFilter, isCustomerStatus, STATUSES } from '../utils/customerQuery';
+import { Activity, Customer, CustomerData, Purchase } from '../models';
+import {
+	buildSearchFilter,
+	isCustomerStatus,
+	STATUSES,
+} from '../utils/customerQuery';
 import findCustomer from '../utils/findCustomer';
 import HttpError from '../utils/HttpError';
 import logActivity from '../utils/logActivity';
@@ -15,10 +18,10 @@ const MAX_NOTE_LENGTH = 1000;
 // Only these fields can be edited through the API; status and vehicles have their own routes
 const EDITABLE_FIELDS = ['firstName', 'lastName', 'email', 'phone'] as const;
 const FIELD_LABELS: Record<(typeof EDITABLE_FIELDS)[number], string> = {
-  firstName: 'First name',
-  lastName: 'Last name',
-  email: 'Email',
-  phone: 'Phone',
+	firstName: 'First name',
+	lastName: 'Last name',
+	email: 'Email',
+	phone: 'Phone',
 };
 
 // GET /api/customers?search=&status=&page=&limit=

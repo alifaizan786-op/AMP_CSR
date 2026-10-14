@@ -20,10 +20,20 @@ const subscriptionSchema = new Schema(
 );
 
 const vehicleSchema = new Schema({
-	plate: { type: String, required: true, uppercase: true, trim: true },
+	plate: {
+		type: String,
+		required: true,
+		// Store without spaces or dashes so "abc 123" and "ABC-123" are the same plate
+		set: (value: string) => value.replace(/[\s-]/g, '').toUpperCase(),
+		match: [/^[A-Z0-9]{2,8}$/, 'Plate must be 2 to 8 letters or numbers'],
+	},
 	make: { type: String, trim: true },
 	model: { type: String, trim: true },
-	year: Number,
+	year: {
+		type: Number,
+		min: [1980, 'Year must be 1980 or later'],
+		max: [new Date().getFullYear() + 1, 'Year cannot be in the future'],
+	},
 	color: { type: String, trim: true },
 	subscription: { type: subscriptionSchema, default: undefined },
 });
@@ -86,4 +96,9 @@ customerSchema.pre('save', function () {
 
 export type CustomerData = InferSchemaType<typeof customerSchema>;
 
-export default model('Customer', customerSchema);
+const Customer = model('Customer', customerSchema);
+
+export type CustomerDocument = InstanceType<typeof Customer>;
+export type VehicleDocument = CustomerDocument['vehicles'][number];
+
+export default Customer;

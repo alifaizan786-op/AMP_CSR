@@ -1,14 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { Types } from 'mongoose';
-import { Customer } from '../models';
+import { Customer, CustomerDocument, VehicleDocument } from '../models';
 import PLANS, { PlanKey } from '../utils/plans';
 
 // Fixed seed so every run produces the same customers, which keeps demos predictable
 faker.seed(42);
 
 type SubscriptionStatus = 'active' | 'overdue' | 'cancelled';
-type CustomerDocument = InstanceType<typeof Customer>;
-type VehicleDocument = CustomerDocument['vehicles'][number];
 
 interface SeedSubscription {
 	plan: PlanKey;

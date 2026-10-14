@@ -7,4 +7,8 @@ const PLANS = {
 
 export type PlanKey = keyof typeof PLANS;
 
+// Narrows unknown input (like a request body field) to a valid plan key
+export const isPlanKey = (value: unknown): value is PlanKey =>
+	typeof value === 'string' && value in PLANS;
+
 export default PLANS;

@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import {
-  addNote,
-  getCustomerById,
-  getCustomers,
-  updateCustomer,
+	addNote,
+	getCustomerById,
+	getCustomers,
+	updateCustomer,
 } from '../controllers/customerController';
+import vehicleRoutes from './vehicles';
 
 const router = Router();
 
@@ -19,5 +20,9 @@ router.patch('/:id', updateCustomer);
 
 // POST /api/customers/:id/notes
 router.post('/:id/notes', addNote);
+
+// Vehicle and subscription routes,
+// under /api/customers/:id/vehicles
+router.use('/:id/vehicles', vehicleRoutes);
 
 export default router;

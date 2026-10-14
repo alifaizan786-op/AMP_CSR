@@ -188,11 +188,11 @@ Send any of `firstName`, `lastName`, `email`, `phone`. Other fields are ignored;
 
 Returns the updated customer.
 
-| Error | When |
-| --- | --- |
+| Error | When                                                        |
+| ----- | ----------------------------------------------------------- |
 | `400` | Invalid id, a field isn't text, or a value fails validation |
-| `404` | Customer not found |
-| `409` | Email already belongs to another customer |
+| `404` | Customer not found                                          |
+| `409` | Email already belongs to another customer                   |
 
 ### Add a note
 
@@ -203,6 +203,109 @@ Returns the updated customer.
 ```
 
 Returns `201` with the new activity entry. Notes are trimmed and limited to 1,000 characters.
+
+## Vehicles and memberships
+
+All routes below are under `/api/customers/:id/vehicles`. Every successful request returns the **full updated customer**, so the UI can replace its copy in one step. Every change is recorded in the activity log.
+
+Plates are stored uppercase without spaces or dashes (`abc-123` becomes `ABC123`) and must be 2 to 8 letters or numbers.
+
+**Billing is simulated.** Starting a membership or retrying a payment records a successful `membership` purchase; no real payment is processed.
+
+### Add a vehicle
+
+`POST /api/customers/:id/vehicles`
+
+```json
+{
+	"plate": "ABC123",
+	"make": "Kia",
+	"model": "Soul",
+	"year": 2023,
+	"color": "Red",
+	"plan": "basic"
+}
+```
+
+Only `plate` is required. Include `plan` (`basic`, `deluxe`, or `ultimate`) to start a membership right away. Returns `201`.
+
+| Error | When                                                    |
+| ----- | ------------------------------------------------------- |
+| `400` | Missing or invalid plate, invalid year, or unknown plan |
+| `409` | That plate is already on this account                   |
+
+### Remove a vehicle
+
+`DELETE /api/customers/:id/vehicles/:vehicleId`
+
+| Error | When                                                                                                                        |
+| ----- | --------------------------------------------------------------------------------------------------------------------------- |
+| `409` | The vehicle has an active or overdue membership. Cancel or transfer it first, so a membership is never dropped by accident. |
+
+### Start a membership
+
+`POST /api/customers/:id/vehicles/:vehicleId/subscription`
+
+```json
+{ "plan": "deluxe" }
+```
+
+Charges the first month and sets the next billing date one month out. Returns `201`. Returns `409` if the vehicle already has an active or overdue membership.
+
+### Change plan
+
+`PATCH /api/customers/:id/vehicles/:vehicleId/subscription`
+
+```json
+{ "plan": "ultimate" }
+```
+
+The new price applies from the next billing date (no proration). Returns `409` if the membership is cancelled or overdue; an overdue payment must be resolved first.
+
+### Cancel a membership
+
+`POST /api/customers/:id/vehicles/:vehicleId/subscription/cancel`
+
+```json
+{ "reason": "Moving out of state" }
+```
+
+A reason is required (max 200 characters). Cancels immediately and stops billing. Returns `409` if there's no active or overdue membership.
+
+### Transfer a membership
+
+`POST /api/customers/:id/vehicles/:vehicleId/subscription/transfer`
+
+Moves the membership from `:vehicleId` to another vehicle, keeping the same plan, price, start date, and billing status. Send **one** of:
+
+```json
+{ "toVehicleId": "6702f1...", "removeOldVehicle": false }
+```
+
+```json
+{
+	"vehicle": {
+		"plate": "NEW123",
+		"make": "Tesla",
+		"model": "Model Y",
+		"year": 2026
+	},
+	"removeOldVehicle": true
+}
+```
+
+Use `vehicle` for the common case of a customer who bought a new car: it adds the car and moves the membership in one request. Set `removeOldVehicle` to `true` to remove the old car at the same time.
+
+| Error | When                                                                                     |
+| ----- | ---------------------------------------------------------------------------------------- |
+| `400` | Both or neither of `toVehicleId` and `vehicle` sent, or transferring to the same vehicle |
+| `409` | The source has no active membership, or the target already has one                       |
+
+### Retry a failed payment
+
+`POST /api/customers/:id/vehicles/:vehicleId/subscription/retry-payment`
+
+For overdue memberships. Records a successful charge, sets the membership back to active, and moves the next billing date one month out. The failed charge stays in purchase history. Returns `409` if the membership isn't overdue.
 
 | Error                     | When                                 |
 | ------------------------- | ------------------------------------ |
