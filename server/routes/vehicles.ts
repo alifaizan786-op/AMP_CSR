@@ -7,7 +7,7 @@ import {
 	removeVehicle,
 	retryPayment,
 	transferSubscription,
-} from '../controllers/vehicleController.ts';
+} from '../controllers/vehicleController';
 
 // mergeParams lets these routes read :id from the parent customers router
 const router = Router({ mergeParams: true });
