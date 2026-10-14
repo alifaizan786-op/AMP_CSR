@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import {
-	getCustomerById,
-	getCustomers,
+  addNote,
+  getCustomerById,
+  getCustomers,
+  updateCustomer,
 } from '../controllers/customerController';
 
 const router = Router();
@@ -11,5 +13,11 @@ router.get('/', getCustomers);
 
 // GET /api/customers/:id
 router.get('/:id', getCustomerById);
+
+// PATCH /api/customers/:id
+router.patch('/:id', updateCustomer);
+
+// POST /api/customers/:id/notes
+router.post('/:id/notes', addNote);
 
 export default router;

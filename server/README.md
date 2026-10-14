@@ -77,12 +77,12 @@ All endpoints are prefixed with `/api`. Errors return a JSON body with a `messag
 
 `GET /api/customers`
 
-| Query param | Type   | Default | Description                                                                                                                  |
-| ----------- | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `search`    | string |         | Matches first name, last name, full name, email, phone, or license plate. Case-insensitive; phone matches ignore formatting. |
-| `status`    | string |         | Filter by `active`, `overdue`, or `inactive`                                                                                 |
-| `page`      | number | `1`     | Page number                                                                                                                  |
-| `limit`     | number | `20`    | Results per page (max `100`)                                                                                                 |
+| Query param | Type   | Default | Description                                                                                                                                                     |
+| ----------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search`    | string |         | Matches first name, last name, email, phone, or license plate. Multi-word searches match names in any order. Case-insensitive; phone matches ignore formatting. |
+| `status`    | string |         | Filter by `active`, `overdue`, or `inactive`                                                                                                                    |
+| `page`      | number | `1`     | Page number                                                                                                                                                     |
+| `limit`     | number | `20`    | Results per page (max `100`)                                                                                                                                    |
 
 Example: `GET /api/customers?search=404555&status=overdue&page=1`
 
@@ -175,6 +175,34 @@ Returns the full customer with vehicles and subscriptions, their purchase histor
 	]
 }
 ```
+
+### Update account info
+
+`PATCH /api/customers/:id`
+
+Send any of `firstName`, `lastName`, `email`, `phone`. Other fields are ignored; vehicles and subscriptions have their own endpoints. Each real change is recorded in the activity log.
+
+```json
+{ "email": "jordan.m@example.com", "phone": "(470) 555-1212" }
+```
+
+Returns the updated customer.
+
+| Error | When |
+| --- | --- |
+| `400` | Invalid id, a field isn't text, or a value fails validation |
+| `404` | Customer not found |
+| `409` | Email already belongs to another customer |
+
+### Add a note
+
+`POST /api/customers/:id/notes`
+
+```json
+{ "message": "Customer asked about a refund for the October charge" }
+```
+
+Returns `201` with the new activity entry. Notes are trimmed and limited to 1,000 characters.
 
 | Error                     | When                                 |
 | ------------------------- | ------------------------------------ |

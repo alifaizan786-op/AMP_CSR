@@ -3,12 +3,23 @@ import { isValidObjectId, QueryFilter } from 'mongoose';
 import { Activity, Customer, Purchase } from '../models';
 import { CustomerData } from '../models/Customer';
 import { buildSearchFilter, isCustomerStatus, STATUSES } from '../utils/customerQuery';
+import findCustomer from '../utils/findCustomer';
+import HttpError from '../utils/HttpError';
+import logActivity from '../utils/logActivity';
 import parsePositiveInt from '../utils/parsePositiveInt';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const MAX_NOTE_LENGTH = 1000;
 
-
+// Only these fields can be edited through the API; status and vehicles have their own routes
+const EDITABLE_FIELDS = ['firstName', 'lastName', 'email', 'phone'] as const;
+const FIELD_LABELS: Record<(typeof EDITABLE_FIELDS)[number], string> = {
+  firstName: 'First name',
+  lastName: 'Last name',
+  email: 'Email',
+  phone: 'Phone',
+};
 
 // GET /api/customers?search=&status=&page=&limit=
 export const getCustomers = async (req: Request, res: Response) => {
@@ -91,4 +102,60 @@ export const getCustomerById = async (
 	}
 
 	res.json({ customer, purchases, activities });
+};
+
+// PATCH /api/customers/:id
+export const updateCustomer = async (
+	req: Request<{ id: string }>,
+	res: Response,
+) => {
+	const customer = await findCustomer(req.params.id);
+	// Express 5 leaves req.body undefined when a request has no body
+	const body = req.body ?? {};
+	const changes: string[] = [];
+
+	for (let i = 0; i < EDITABLE_FIELDS.length; i++) {
+		const field = EDITABLE_FIELDS[i];
+		const value = body[field];
+		if (value === undefined) continue;
+
+		if (typeof value !== 'string') {
+			throw new HttpError(400, `${FIELD_LABELS[field]} must be text`);
+		}
+
+		// Compare after setting, so the schema's trim, lowercase, and digits-only rules apply first
+		const before = customer[field];
+		customer[field] = value;
+		if (customer[field] !== before) {
+			changes.push(
+				`${FIELD_LABELS[field]} changed from "${before}" to "${customer[field]}"`,
+			);
+		}
+	}
+
+	if (changes.length) {
+		await customer.save();
+		await logActivity(customer._id, changes.join('; '));
+	}
+
+	res.json(customer);
+};
+
+// POST /api/customers/:id/notes
+export const addNote = async (req: Request<{ id: string }>, res: Response) => {
+	const message =
+		typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+
+	if (!message) throw new HttpError(400, 'Note cannot be empty');
+	if (message.length > MAX_NOTE_LENGTH) {
+		throw new HttpError(
+			400,
+			`Note must be ${MAX_NOTE_LENGTH} characters or less`,
+		);
+	}
+
+	const customer = await findCustomer(req.params.id);
+	const note = await logActivity(customer._id, message, 'note');
+
+	res.status(201).json(note);
 };
