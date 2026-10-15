@@ -29,6 +29,9 @@ import { formatPhone, fullName } from '../utils/format';
 
 const MAX_PLATES_SHOWN = 2;
 
+// On phones, show only name and status so the status chip isn't pushed off-screen
+const HIDE_ON_PHONE = { display: { xs: 'none', sm: 'table-cell' } };
+
 const PAGE_SIZE = 20; // matches the API's default limit
 
 // Overdue comes right after All: those customers are the most likely to be calling in
@@ -182,6 +185,13 @@ const CustomerListPage = () => {
 		});
 	};
 
+	// Pass the current search so the detail page's Back link returns here
+	const openCustomer = (id: string) => {
+		navigate(`/customers/${id}`, {
+			state: { listSearch: searchParams.toString() },
+		});
+	};
+
 	const changePage = (newPage: number) => {
 		setSearchParams((previous) => {
 			const params = new URLSearchParams(previous);
@@ -264,12 +274,12 @@ const CustomerListPage = () => {
 					</Alert>
 				) : (
 					<Box sx={{ overflowX: 'auto' }}>
-						<Table size='small' sx={{ minWidth: 640 }}>
+						<Table size='small' sx={{ minWidth: { sm: 640 } }}>
 							<TableHead>
 								<TableRow>
 									<TableCell>Customer</TableCell>
-									<TableCell>Phone</TableCell>
-									<TableCell>Vehicles</TableCell>
+									<TableCell sx={HIDE_ON_PHONE}>Phone</TableCell>
+									<TableCell sx={HIDE_ON_PHONE}>Vehicles</TableCell>
 									<TableCell>Status</TableCell>
 								</TableRow>
 							</TableHead>
@@ -279,14 +289,20 @@ const CustomerListPage = () => {
 									<TableRow
 										key={customer._id}
 										hover
-										// Pass the current search so the detail page's Back link returns here
-										onClick={() =>
-											navigate(`/customers/${customer._id}`, {
-												state: { listSearch: searchParams.toString() },
-											})
-										}
+										onClick={() => openCustomer(customer._id)}
+										// Reachable with Tab and opened with Enter, like a link, for keyboard users
+										tabIndex={0}
+										role='link'
+										onKeyDown={(event) => {
+											if (event.key === 'Enter') openCustomer(customer._id);
+										}}
 										sx={{
 											cursor: 'pointer',
+											'&:focus-visible': {
+												outline: 2,
+												outlineColor: 'primary.main',
+												outlineOffset: -2,
+											},
 											// Red left edge makes overdue accounts easy to spot while scanning
 											boxShadow: (theme) =>
 												customer.status === 'overdue'
@@ -302,16 +318,20 @@ const CustomerListPage = () => {
 											<Typography sx={{ fontWeight: 600 }}>
 												{fullName(customer)}
 											</Typography>
-											<Typography variant='body2' color='text.secondary'>
+											<Typography
+												variant='body2'
+												color='text.secondary'
+												// Long emails can wrap mid-address, so they don't push the status off-screen on phones
+												sx={{ overflowWrap: 'anywhere' }}>
 												{customer.email}
 											</Typography>
 										</TableCell>
 
-										<TableCell sx={{ whiteSpace: 'nowrap' }}>
+										<TableCell sx={{ ...HIDE_ON_PHONE, whiteSpace: 'nowrap' }}>
 											{formatPhone(customer.phone)}
 										</TableCell>
 
-										<TableCell>
+										<TableCell sx={HIDE_ON_PHONE}>
 											{customer.vehicles.length === 0 ? (
 												<Typography variant='body2' color='text.secondary'>
 													None

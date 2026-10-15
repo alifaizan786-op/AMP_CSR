@@ -9,12 +9,12 @@ No login needed. All customers are generated demo data.
 
 ## What it does
 
-| Requirement                         | Where                                                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                              |
+| Requirement                         | Where                                                                                                                                          |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                     |
 | Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity |
-| Edit account info                   | **Edit** on the Account card: name, email, phone                                                        |
-| View and edit vehicle subscriptions | Vehicles card: add a vehicle (optionally with a plan), remove it, or transfer its membership to another car |
+| Edit account info                   | **Edit** on the Account card: name, email, phone                                                                                               |
+| View and edit vehicle subscriptions | Vehicles card: add a vehicle (optionally with a plan), remove it, or transfer its membership to another car                                    |
 
 ### Beyond the brief
 
@@ -31,12 +31,12 @@ No login needed. All customers are generated demo data.
 
 The seed includes one customer for each common support call:
 
-| Customer     | Situation                               | Try                                                                                      |
-| ------------ | --------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Jordan Miles | Overdue: latest charge declined         | Add a second car, then transfer his membership to it. The overdue status moves with it   |
-| Priya Shah   | Two cars, both on active memberships    | Try to remove a car (blocked, with the reason). Transfer one membership to a new car     |
-| Marcus Bell  | Cancelled membership                    | Remove his car (allowed, since the membership is cancelled)                              |
-| Elena Ruiz   | No membership, single washes only       | Add a car with a plan and watch the charge appear in purchase history                    |
+| Customer     | Situation                            | Try                                                                                    |
+| ------------ | ------------------------------------ | -------------------------------------------------------------------------------------- |
+| Jordan Miles | Overdue: latest charge declined      | Add a second car, then transfer his membership to it. The overdue status moves with it |
+| Priya Shah   | Two cars, both on active memberships | Try to remove a car (blocked, with the reason). Transfer one membership to a new car   |
+| Marcus Bell  | Cancelled membership                 | Remove his car (allowed, since the membership is cancelled)                            |
+| Elena Ruiz   | No membership, single washes only    | Add a car with a plan and watch the charge appear in purchase history                  |
 
 Searching `404 555` finds all four by phone. Searching a plate like `ovr-1234` works too.
 
@@ -91,14 +91,14 @@ Full API reference: [server/README.md](server/README.md)
 - **After a save, the detail page refetches quietly.** A write can also add activity entries or purchases, so reloading everything is simpler and safer than patching pieces of local state. The current data stays on screen meanwhile, so there's no spinner flash.
 - **One shared dialog shell (`FormDialog`)** handles the error alert, saving spinner, and blocking close mid-save, so each dialog only defines its fields and what happens on submit.
 - **One deployed service.** Express serves the built React app with a fallback to `index.html` for client-side routes, so there's one URL, no CORS setup, and the client calls a relative `/api`.
+- **Optimistic concurrency on customers.** Every save checks the document's version, so two simultaneous requests (two CSRs, two tabs, a network retry) can't both apply. The second gets a 409 and is asked to refresh. Since the customer is saved before any charge is recorded, this also prevents a double charge on "retry payment".
 
 ## Known limitations and next steps
 
 - **Automated tests.** There are none yet. I'd start with the server's business rules (transfer, the remove guard, derived status) using Vitest and an in-memory MongoDB, then a few end-to-end flows with Playwright.
 - **Authentication.** There's no login, and every change is logged as "CSR". In production the author would come from the signed-in user, with roles for who can cancel or refund.
-- **Transactions.** A write saves the customer, then the purchase and activity record separately. A crash in between could leave them out of sync; a MongoDB transaction would fix that.
+- **Transactions.** Optimistic concurrency stops conflicting writes to a customer, but a write still saves the customer, then the purchase and activity record separately. A crash in between could leave them out of sync; a MongoDB transaction would make them all-or-nothing.
 - **Payments are simulated.** The seed creates failed charges, but no real card is charged. A real version would use a payment provider and a card-update flow.
 - **Search at scale.** Regex search is fine for a demo but doesn't scale; Atlas Search would.
 - **Shared types.** Plan definitions and API types are mirrored between the client and server. At scale both would import them from a shared package.
 - **A plate can be on two accounts.** Cars get sold, so this is allowed, but two live memberships on one car across accounts could be abused and would deserve a check.
-

@@ -11,6 +11,9 @@ export const STATUSES: CustomerStatus[] = ['active', 'overdue', 'inactive'];
 export const isCustomerStatus = (value: string): value is CustomerStatus =>
 	(STATUSES as string[]).includes(value);
 
+// Only digits and the characters people type in phone numbers: (404) 555-0101, +1 404.555.0101
+const PHONE_LIKE = /^[\d\s()+.-]+$/;
+
 // One search box matches name, email, phone, or plate,
 // since callers lead with different details
 export const buildSearchFilter = (
@@ -30,11 +33,16 @@ export const buildSearchFilter = (
 		},
 	];
 
-	// Phones are stored as digits only, so compare digits only.
-	// Skipped when the search has no digits,
-	// since an empty pattern would match every customer.
-	const digits = text.replace(/\D/g, '');
-	if (digits) conditions.push({ phone: new RegExp(digits) });
+	// Phones are stored as digits only, so compare digits only, but only when the search
+	// looks like a phone number (digits plus formatting). Otherwise "x 1" or "miles 404"
+	// would be stripped to "1" or "404" and match unrelated customers.
+	// At least 3 digits, so a single typed digit doesn't match most of the list.
+	let digits = text.replace(/\D/g, '');
+	// US numbers are stored as 10 digits, so drop a leading country code ("+1 404...")
+	if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1);
+	if (PHONE_LIKE.test(text) && digits.length >= 3) {
+		conditions.push({ phone: new RegExp(digits) });
+	}
 
 	// Every word must match a first or last name, so "Jordan Miles", "Miles Jordan",
 	// and three-word names like "Mary Ann Smith" all work
