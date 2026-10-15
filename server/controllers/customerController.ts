@@ -36,9 +36,7 @@ export const getCustomers = async (req: Request, res: Response) => {
 	);
 
 	if (statusParam && !isCustomerStatus(statusParam)) {
-		return res
-			.status(400)
-			.json({ message: `Status must be one of: ${STATUSES.join(', ')}` });
+		throw new HttpError(400, `Status must be one of: ${STATUSES.join(', ')}`);
 	}
 
 	const searchFilter = buildSearchFilter(search);
@@ -91,7 +89,7 @@ export const getCustomerById = async (
 
 	// An invalid id would make Mongoose throw a CastError, so reject it up front with a clear 400
 	if (!isValidObjectId(id)) {
-		return res.status(400).json({ message: 'Invalid customer id' });
+		throw new HttpError(400, 'Invalid customer id');
 	}
 
 	const [customer, purchases, activities] = await Promise.all([
@@ -101,7 +99,7 @@ export const getCustomerById = async (
 	]);
 
 	if (!customer) {
-		return res.status(404).json({ message: 'Customer not found' });
+		throw new HttpError(404, 'Customer not found');
 	}
 
 	res.json({ customer, purchases, activities });
