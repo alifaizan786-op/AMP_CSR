@@ -87,3 +87,9 @@ export type AccountFields = Pick<
 	Customer,
 	'firstName' | 'lastName' | 'email' | 'phone'
 >;
+
+// What the API accepts when adding a vehicle (plus an optional plan)
+export type VehicleInput = Pick<
+	Vehicle,
+	'plate' | 'year' | 'make' | 'model' | 'color'
+>;

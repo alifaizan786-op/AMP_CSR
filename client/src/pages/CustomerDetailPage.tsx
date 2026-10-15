@@ -4,7 +4,6 @@ import {
 	Box,
 	Button,
 	CircularProgress,
-	Divider,
 	Grid,
 	Paper,
 	Snackbar,
@@ -19,8 +18,8 @@ import AccountCard from '../components/customer/AccountCard';
 import ActivityList from '../components/customer/ActivityList';
 import OverdueBanner from '../components/customer/OverdueBanner';
 import PurchaseTable from '../components/customer/PurchaseTable';
-import VehicleRow from '../components/customer/VehicleRow';
 import StatusChip from '../components/StatusChip';
+import VehiclesCard from '../components/vehicle/VehiclesCard';
 import type { CustomerDetailResponse } from '../types';
 import { fullName } from '../utils/format';
 
@@ -161,22 +160,7 @@ const CustomerDetailPage = () => {
 				</Grid>
 				<Grid size={{ xs: 12, md: 8 }}>
 					<Stack spacing={3}>
-						<Paper>
-							<Typography variant='h2' sx={{ px: 2.5, pt: 2.5, pb: 1 }}>
-								Vehicles ({customer.vehicles.length})
-							</Typography>
-							{customer.vehicles.length === 0 ? (
-								<Typography sx={{ color: 'text.secondary', px: 2.5, pb: 2.5 }}>
-									No vehicles on this account.
-								</Typography>
-							) : (
-								<Stack divider={<Divider />}>
-									{customer.vehicles.map((vehicle) => (
-										<VehicleRow key={vehicle._id} vehicle={vehicle} />
-									))}
-								</Stack>
-							)}
-						</Paper>
+						<VehiclesCard customer={customer} onSaved={handleSaved} />
 						<PurchaseTable purchases={data.purchases} />
 					</Stack>
 				</Grid>

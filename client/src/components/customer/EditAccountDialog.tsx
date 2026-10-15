@@ -1,15 +1,4 @@
-import {
-	Alert,
-	Button,
-	CircularProgress,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogTitle,
-	Stack,
-	TextField,
-} from '@mui/material';
-import type { SubmitEvent } from 'react';
+import { TextField } from '@mui/material';
 import { useState } from 'react';
 import { updateCustomer } from '../../api/customers';
 import type { AccountFields, Customer } from '../../types';
@@ -19,6 +8,7 @@ import {
 	validateAccount,
 } from '../../utils/accountForm';
 import { formatPhone } from '../../utils/format';
+import FormDialog from '../FormDialog';
 
 const FIELDS: { name: AccountField; label: string; type?: string }[] = [
 	{ name: 'firstName', label: 'First name' },
@@ -64,10 +54,7 @@ const EditAccountDialog = ({
 		if (errors[field]) setErrors({ ...errors, [field]: undefined });
 	};
 
-	const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-		// Stop the browser's default form submit, which would reload the page
-		event.preventDefault();
-
+	const handleSubmit = async () => {
 		const found = validateAccount(form);
 		setErrors(found);
 		if (Object.keys(found).length > 0) return;
@@ -85,43 +72,27 @@ const EditAccountDialog = ({
 	};
 
 	return (
-		<Dialog open onClose={saving ? undefined : onClose} fullWidth maxWidth='xs'>
-			<form onSubmit={handleSubmit} noValidate>
-				<DialogTitle>Edit account</DialogTitle>
-				<DialogContent>
-					<Stack spacing={2} sx={{ pt: 1 }}>
-						{serverError && <Alert severity='error'>{serverError}</Alert>}
-						{FIELDS.map((field) => (
-							<TextField
-								key={field.name}
-								label={field.label}
-								type={field.type}
-								value={form[field.name]}
-								onChange={(event) =>
-									changeField(field.name, event.target.value)
-								}
-								error={!!errors[field.name]}
-								helperText={errors[field.name]}
-								disabled={saving}
-								fullWidth
-							/>
-						))}
-					</Stack>
-				</DialogContent>
-				<DialogActions sx={{ px: 3, pb: 2 }}>
-					<Button onClick={onClose} disabled={saving}>
-						Cancel
-					</Button>
-					<Button
-						type='submit'
-						variant='contained'
-						disabled={!hasChanges || saving}
-						startIcon={saving ? <CircularProgress size={16} /> : undefined}>
-						Save
-					</Button>
-				</DialogActions>
-			</form>
-		</Dialog>
+		<FormDialog
+			title='Edit account'
+			saving={saving}
+			serverError={serverError}
+			canSubmit={hasChanges}
+			onSubmit={handleSubmit}
+			onClose={onClose}>
+			{FIELDS.map((field) => (
+				<TextField
+					key={field.name}
+					label={field.label}
+					type={field.type}
+					value={form[field.name]}
+					onChange={(event) => changeField(field.name, event.target.value)}
+					error={!!errors[field.name]}
+					helperText={errors[field.name]}
+					disabled={saving}
+					fullWidth
+				/>
+			))}
+		</FormDialog>
 	);
 };
 
