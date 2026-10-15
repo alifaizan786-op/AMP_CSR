@@ -7,11 +7,14 @@ import {
 	LinearProgress,
 	Paper,
 	Stack,
+	Tab,
 	Table,
 	TableBody,
 	TableCell,
 	TableHead,
+	TablePagination,
 	TableRow,
+	Tabs,
 	TextField,
 	Typography,
 } from '@mui/material';
@@ -21,46 +24,108 @@ import { getCustomers } from '../api/customers';
 import PlateBadge from '../components/PlateBadge';
 import StatusChip from '../components/StatusChip';
 import useDebounce from '../hooks/useDebounce';
-import type { CustomerListResponse } from '../types';
+import type { CustomerListResponse, CustomerStatus } from '../types';
 import { formatPhone, fullName } from '../utils/format';
 
 const MAX_PLATES_SHOWN = 2;
 
-const CustomerListPage = () => {
-	const navigate = useNavigate();
-	// The search lives in the URL (?search=jordan), so refresh and the back button keep it
-	const [searchParams, setSearchParams] = useSearchParams();
-	const search = searchParams.get('search') ?? '';
+const PAGE_SIZE = 20; // matches the API's default limit
 
+// Overdue comes right after All: those customers are the most likely to be calling in
+const STATUS_TABS: { value: CustomerStatus | ''; label: string }[] = [
+	{ value: '', label: 'All' },
+	{ value: 'overdue', label: 'Overdue' },
+	{ value: 'active', label: 'Active' },
+	{ value: 'inactive', label: 'No membership' },
+];
+
+// The URL can contain anything, so only accept a real status
+const isCustomerStatus = (value: string | null): value is CustomerStatus =>
+	value === 'active' || value === 'overdue' || value === 'inactive';
+
+const CustomerListPage = () => {
+	// ---- Router ----
+	const navigate = useNavigate();
+	// Search, status, and page live in the URL (?search=smith&status=overdue&page=2),
+	// so refresh and the back button keep the CSR's place
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// ---- Values read from the URL ----
+	const search = searchParams.get('search') ?? '';
+	const statusParam = searchParams.get('status');
+	const status = isCustomerStatus(statusParam) ? statusParam : '';
+	const pageParam = searchParams.get('page');
+	const pageNumber = Number(pageParam);
+	// Page 1 is never written to the URL, so a valid page param is a whole number above 1
+	const isValidPage = Number.isInteger(pageNumber) && pageNumber > 1;
+	const page = isValidPage ? pageNumber : 1;
+
+	// ---- State ----
 	// What's typed in the box updates instantly; the URL only updates once typing pauses
 	const [searchInput, setSearchInput] = useState(search);
-	const debouncedSearch = useDebounce(searchInput.trim());
+	const [data, setData] = useState<CustomerListResponse | null>(null);
+	const [error, setError] = useState('');
+	// Bumping this number re-runs the fetch, which is how "Try again" works
+	const [retryCount, setRetryCount] = useState(0);
+	// Which request the current data (or error) belongs to
+	const [loadedKey, setLoadedKey] = useState('');
 
+	// ---- Derived values ----
+	const debouncedSearch = useDebounce(searchInput.trim());
+	// Any change to search, status, page, or a retry makes a new key;
+	// we're loading until the data we have belongs to the current key
+	const requestKey = `${search}|${status}|${page}|${retryCount}`;
+	const loading = loadedKey !== requestKey;
+	const counts = data?.statusCounts;
+	const allCount = counts
+		? counts.active + counts.overdue + counts.inactive
+		: undefined;
+
+	// ---- Effects ----
+	// Remove values that aren't valid (e.g. ?status=banana or ?page=abc),
+	// so the URL matches what's shown
+	useEffect(() => {
+		const badStatus = statusParam !== null && !isCustomerStatus(statusParam);
+		const badPage = pageParam !== null && !isValidPage;
+		if (!badStatus && !badPage) return;
+
+		setSearchParams(
+			(previous) => {
+				const params = new URLSearchParams(previous);
+				if (badStatus) params.delete('status');
+				if (badPage) params.delete('page');
+				return params;
+			},
+			{ replace: true },
+		);
+	}, [statusParam, pageParam, isValidPage, setSearchParams]);
+
+	// Write the search to the URL once typing pauses
 	useEffect(() => {
 		if (debouncedSearch === search) return;
 		// replace: true so each search doesn't add a new entry to the browser history
-		setSearchParams(debouncedSearch ? { search: debouncedSearch } : {}, {
-			replace: true,
-		});
+		setSearchParams(
+			(previous) => {
+				const params = new URLSearchParams(previous);
+				if (debouncedSearch) params.set('search', debouncedSearch);
+				else params.delete('search');
+				// A new search starts back on page 1
+				params.delete('page');
+				return params;
+			},
+			{ replace: true },
+		);
 	}, [debouncedSearch, search, setSearchParams]);
 
-	const [data, setData] = useState<CustomerListResponse | null>(null);
-	const [error, setError] = useState('');
-
-	// Bumping this number re-runs the fetch, which is how "Try again" works
-	const [retryCount, setRetryCount] = useState(0);
-
-	// Identifies the request we want: a new search or a retry makes a new key.
-	// We're loading until the data (or error) we have belongs to that key.
-	const requestKey = `${search}|${retryCount}`;
-	const [loadedKey, setLoadedKey] = useState('');
-	const loading = loadedKey !== requestKey;
-
+	// Fetch customers whenever the search, status, page, or retry count changes
 	useEffect(() => {
 		const controller = new AbortController();
-		const key = `${search}|${retryCount}`;
+		const key = `${search}|${status}|${page}|${retryCount}`;
 
-		getCustomers({ search }, controller.signal)
+		getCustomers(
+			{ search, status: status || undefined, page },
+			controller.signal,
+		)
 			.then((response) => {
 				setData(response);
 				setError('');
@@ -74,7 +139,44 @@ const CustomerListPage = () => {
 			});
 
 		return () => controller.abort();
-	}, [search, retryCount]);
+	}, [search, status, page, retryCount]);
+
+	// A page past the end (e.g. an old link to ?page=99) jumps to the last real page
+	useEffect(() => {
+		if (!data || data.totalPages === 0 || page <= data.totalPages) return;
+		const lastPage = data.totalPages;
+		setSearchParams(
+			(previous) => {
+				const params = new URLSearchParams(previous);
+				if (lastPage > 1) params.set('page', String(lastPage));
+				else params.delete('page');
+				return params;
+			},
+			{ replace: true },
+		);
+	}, [data, page, setSearchParams]);
+
+	// ---- Event handlers ----
+	const changeStatus = (newStatus: string) => {
+		setSearchParams((previous) => {
+			const params = new URLSearchParams(previous);
+			if (newStatus) params.set('status', newStatus);
+			else params.delete('status');
+			// A different group starts back on page 1
+			params.delete('page');
+			return params;
+		});
+	};
+
+	const changePage = (newPage: number) => {
+		setSearchParams((previous) => {
+			const params = new URLSearchParams(previous);
+			// Page 1 is the default, so leave it out to keep the URL clean
+			if (newPage > 1) params.set('page', String(newPage));
+			else params.delete('page');
+			return params;
+		});
+	};
 
 	return (
 		<Stack spacing={3}>
@@ -103,6 +205,32 @@ const CustomerListPage = () => {
 			</Box>
 
 			<Paper>
+				<Tabs
+					value={status}
+					onChange={(_, newStatus: string) => changeStatus(newStatus)}
+					variant='scrollable'
+					sx={{ px: 1, borderBottom: 1, borderColor: 'divider' }}>
+					{STATUS_TABS.map((tab) => {
+						const count = tab.value ? counts?.[tab.value] : allCount;
+						return (
+							<Tab
+								key={tab.label}
+								value={tab.value}
+								label={
+									count === undefined ? tab.label : `${tab.label} (${count})`
+								}
+								sx={
+									tab.value === 'overdue' && count
+										? {
+												color: 'error.main',
+												'&.Mui-selected': { color: 'error.main' },
+											}
+										: undefined
+								}
+							/>
+						);
+					})}
+				</Tabs>
 				{/* Fixed-height slot so the table doesn't jump when the progress bar appears */}
 				<Box sx={{ height: 4 }}>{loading && <LinearProgress />}</Box>
 
@@ -216,6 +344,16 @@ const CustomerListPage = () => {
 							</TableBody>
 						</Table>
 					</Box>
+				)}
+				{data && data.total > 0 && (
+					<TablePagination
+						component='div'
+						count={data.total}
+						page={page - 1}
+						rowsPerPage={PAGE_SIZE}
+						rowsPerPageOptions={[]}
+						onPageChange={(_, newPage) => changePage(newPage + 1)}
+					/>
 				)}
 			</Paper>
 		</Stack>
