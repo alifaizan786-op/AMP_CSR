@@ -79,7 +79,7 @@ All endpoints are prefixed with `/api`. Errors return a JSON body with a `messag
 
 | Query param | Type   | Default | Description                                                                                                                                                     |
 | ----------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`    | string |         | Matches first name, last name, email, phone, or license plate. Multi-word searches match names in any order. Case-insensitive; phone matches ignore formatting. |
+| `search`    | string |         | Matches first name, last name, email, phone, or license plate.   With several words, every word must match the first or last name, in any order (so "Mary Ann Smith" works). Case-insensitive; phone matches ignore formatting. |
 | `status`    | string |         | Filter by `active`, `overdue`, or `inactive`                                                                                                                    |
 | `page`      | number | `1`     | Page number                                                                                                                                                     |
 | `limit`     | number | `20`    | Results per page (max `100`)                                                                                                                                    |
@@ -128,7 +128,6 @@ Returns the full customer with vehicles and subscriptions, their purchase histor
 		"_id": "6702f1...",
 		"firstName": "Jordan",
 		"lastName": "Miles",
-		"fullName": "Jordan Miles",
 		"email": "jordan.miles@example.com",
 		"phone": "4045550101",
 		"status": "overdue",
