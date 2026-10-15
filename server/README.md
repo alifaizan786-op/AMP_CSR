@@ -59,11 +59,13 @@ All endpoints are prefixed with `/api`. Errors return a JSON body with a `messag
 { "message": "Customer not found" }
 ```
 
-| Status | Meaning                                                 |
-| ------ | ------------------------------------------------------- |
-| `400`  | Invalid input, such as a malformed id or unknown status |
-| `404`  | Resource not found                                      |
-| `500`  | Unexpected server error                                 |
+| Status | Meaning                                                                                                   |
+| ------ | --------------------------------------------------------------------------------------------------------- |
+| `400`  | Invalid input, such as a malformed id, an unknown status, a failed validation, or a body that isn't JSON |
+| `404`  | Resource not found                                                                                        |
+| `409`  | A business rule blocks the change (such as a duplicate plate), or another request changed the customer at the same moment |
+| `413`  | Request body over 100 KB                                                                                  |
+| `500`  | Unexpected server error                                                                                   |                               |
 
 ### Health check
 
@@ -79,7 +81,7 @@ All endpoints are prefixed with `/api`. Errors return a JSON body with a `messag
 
 | Query param | Type   | Default | Description                                                                                                                                                     |
 | ----------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`    | string |         | Matches first name, last name, email, phone, or license plate.   With several words, every word must match the first or last name, in any order (so "Mary Ann Smith" works). Case-insensitive; phone matches ignore formatting. |
+| `search`    | string |         | Matches first name, last name, email, license plate, or phone. With several words, every word must match the first or last name, in any order (so "Mary Ann Smith" works). Phone matching applies only when the search looks like a phone number (digits plus spaces, dashes, parentheses, `+`, or dots, with at least 3 digits); a leading US `+1` is ignored. Case-insensitive. |
 | `status`    | string |         | Filter by `active`, `overdue`, or `inactive`                                                                                                                    |
 | `page`      | number | `1`     | Page number                                                                                                                                                     |
 | `limit`     | number | `20`    | Results per page (max `100`)                                                                                                                                    |

@@ -25,6 +25,8 @@ No login needed. All customers are generated demo data.
 - **Guarded actions**: a vehicle with a live membership can't be removed until it's cancelled or transferred, and the menu says why instead of just greying it out
 - **Charge warning**: adding a vehicle with a plan says "Charges $29.99 today" before the CSR confirms
 - **Transfer options**: move a membership to an existing car or a new one, and optionally remove the old car in the same step (the "I sold my car" call)
+- **Retry payment**: an overdue membership can be retried from the vehicle's ⋮ menu, with a confirm that shows the amount before charging
+- **CSR notes**: CSRs can leave notes on the account for whoever takes the next call, shown in the activity log alongside automatic changes
 - Validation on both the client (instant feedback) and the server (the source of truth), with server errors shown in the dialog without losing what was typed
 
 ## Try it
@@ -33,7 +35,7 @@ The seed includes one customer for each common support call:
 
 | Customer     | Situation                            | Try                                                                                    |
 | ------------ | ------------------------------------ | -------------------------------------------------------------------------------------- |
-| Jordan Miles | Overdue: latest charge declined      | Add a second car, then transfer his membership to it. The overdue status moves with it |
+| Jordan Miles | Overdue: latest charge declined      | Retry his payment from the ⋮ menu and watch the banner clear. Or add a second car and transfer his membership to it; the overdue status moves with it |
 | Priya Shah   | Two cars, both on active memberships | Try to remove a car (blocked, with the reason). Transfer one membership to a new car   |
 | Marcus Bell  | Cancelled membership                 | Remove his car (allowed, since the membership is cancelled)                            |
 | Elena Ruiz   | No membership, single washes only    | Add a car with a plan and watch the charge appear in purchase history                  |
@@ -67,8 +69,8 @@ client/src/
   api/          fetch wrapper (ApiError) and one function per endpoint
   pages/        CustomerListPage, CustomerDetailPage
   components/   shared pieces (FormDialog, StatusChip, PlateBadge)
-    customer/   account card and edit dialog, purchases, activity, overdue banner
-    vehicle/    vehicle rows and the add, remove, and transfer dialogs
+    customer/   account card and edit dialog, purchases, activity and notes, overdue banner
+    vehicle/    vehicle rows and the add, remove, transfer, and retry-payment dialogs
   hooks/        useDebounce, useVehicleForm
   utils/        formatting and form validation
 server/
@@ -96,6 +98,7 @@ Full API reference: [server/README.md](server/README.md)
 ## Known limitations and next steps
 
 - **Automated tests.** There are none yet. I'd start with the server's business rules (transfer, the remove guard, derived status) using Vitest and an in-memory MongoDB, then a few end-to-end flows with Playwright.
+- **Plan changes in the UI.** The API already supports starting, changing, and cancelling memberships (see [server/README.md](server/README.md)); the UI doesn't expose them yet.
 - **Authentication.** There's no login, and every change is logged as "CSR". In production the author would come from the signed-in user, with roles for who can cancel or refund.
 - **Transactions.** Optimistic concurrency stops conflicting writes to a customer, but a write still saves the customer, then the purchase and activity record separately. A crash in between could leave them out of sync; a MongoDB transaction would make them all-or-nothing.
 - **Payments are simulated.** The seed creates failed charges, but no real card is charged. A real version would use a payment provider and a card-update flow.
