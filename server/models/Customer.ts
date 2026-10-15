@@ -27,27 +27,52 @@ const vehicleSchema = new Schema({
 		set: (value: string) => value.replace(/[\s-]/g, '').toUpperCase(),
 		match: [/^[A-Z0-9]{2,8}$/, 'Plate must be 2 to 8 letters or numbers'],
 	},
-	make: { type: String, trim: true },
-	model: { type: String, trim: true },
+	make: {
+		type: String,
+		trim: true,
+		maxlength: [30, 'Make can be at most 30 characters'],
+	},
+	model: {
+		type: String,
+		trim: true,
+		maxlength: [30, 'Model can be at most 30 characters'],
+	},
 	year: {
 		type: Number,
 		min: [1980, 'Year must be 1980 or later'],
 		max: [new Date().getFullYear() + 1, 'Year cannot be in the future'],
 	},
-	color: { type: String, trim: true },
+	color: {
+		type: String,
+		trim: true,
+		maxlength: [30, 'Color can be at most 30 characters'],
+	},
 	subscription: { type: subscriptionSchema, default: undefined },
 });
 
 const customerSchema = new Schema(
 	{
-		firstName: { type: String, required: true, trim: true },
-		lastName: { type: String, required: true, trim: true },
+		// Length limits keep one bad paste from flooding the page and the activity log
+		firstName: {
+			type: String,
+			required: true,
+			trim: true,
+			maxlength: [50, 'First name can be at most 50 characters'],
+		},
+		lastName: {
+			type: String,
+			required: true,
+			trim: true,
+			maxlength: [50, 'Last name can be at most 50 characters'],
+		},
 		email: {
 			type: String,
 			required: true,
 			unique: true,
 			lowercase: true,
 			trim: true,
+			// 254 is the longest a valid email address can be
+			maxlength: [254, 'Email can be at most 254 characters'],
 			match: [
 				/^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 				'Please enter a valid email address',
@@ -68,7 +93,9 @@ const customerSchema = new Schema(
 		},
 		vehicles: [vehicleSchema],
 	},
-	{ timestamps: true },
+	// optimisticConcurrency: save() fails if someone else saved this customer since it was loaded,
+	// so two simultaneous requests (e.g. a double "retry payment") can't both go through
+	{ timestamps: true, optimisticConcurrency: true },
 );
 
 // Indexes on the fields CSRs search and filter by

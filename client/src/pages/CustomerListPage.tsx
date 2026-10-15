@@ -63,12 +63,23 @@ const CustomerListPage = () => {
 	// ---- State ----
 	// What's typed in the box updates instantly; the URL only updates once typing pauses
 	const [searchInput, setSearchInput] = useState(search);
+	// The URL search the box was last matched to; see the sync below
+	const [syncedSearch, setSyncedSearch] = useState(search);
 	const [data, setData] = useState<CustomerListResponse | null>(null);
 	const [error, setError] = useState('');
 	// Bumping this number re-runs the fetch, which is how "Try again" works
 	const [retryCount, setRetryCount] = useState(0);
 	// Which request the current data (or error) belongs to
 	const [loadedKey, setLoadedKey] = useState('');
+
+	// When the URL's search changes from outside the box (the "AMP Support" link, back/forward),
+	// make the box match. Done during render, React's recommended way to reset state from a
+	// changing value; an effect would show the stale text for a frame first.
+	if (search !== syncedSearch) {
+		setSyncedSearch(search);
+		// Compare trimmed so our own debounced write doesn't eat a trailing space mid-typing
+		if (searchInput.trim() !== search) setSearchInput(search);
+	}
 
 	// ---- Derived values ----
 	const debouncedSearch = useDebounce(searchInput.trim());
@@ -102,7 +113,10 @@ const CustomerListPage = () => {
 
 	// Write the search to the URL once typing pauses
 	useEffect(() => {
-		if (debouncedSearch === search) return;
+		// Only once the debounce has caught up with the box; otherwise a stale value
+		// (e.g. "el" right after the box was cleared) would be written back to the URL
+		if (debouncedSearch !== searchInput.trim() || debouncedSearch === search)
+			return;
 		// replace: true so each search doesn't add a new entry to the browser history
 		setSearchParams(
 			(previous) => {
@@ -115,7 +129,7 @@ const CustomerListPage = () => {
 			},
 			{ replace: true },
 		);
-	}, [debouncedSearch, search, setSearchParams]);
+	}, [debouncedSearch, searchInput, search, setSearchParams]);
 
 	// Fetch customers whenever the search, status, page, or retry count changes
 	useEffect(() => {

@@ -10,11 +10,17 @@ import {
 import { formatPhone } from '../../utils/format';
 import FormDialog from '../FormDialog';
 
-const FIELDS: { name: AccountField; label: string; type?: string }[] = [
-	{ name: 'firstName', label: 'First name' },
-	{ name: 'lastName', label: 'Last name' },
-	{ name: 'email', label: 'Email', type: 'email' },
-	{ name: 'phone', label: 'Phone', type: 'tel' },
+// maxLength matches the server's schema limits (phone allows room for formatting)
+const FIELDS: {
+	name: AccountField;
+	label: string;
+	type?: string;
+	maxLength: number;
+}[] = [
+	{ name: 'firstName', label: 'First name', maxLength: 50 },
+	{ name: 'lastName', label: 'Last name', maxLength: 50 },
+	{ name: 'email', label: 'Email', type: 'email', maxLength: 254 },
+	{ name: 'phone', label: 'Phone', type: 'tel', maxLength: 20 },
 ];
 
 interface EditAccountDialogProps {
@@ -89,6 +95,7 @@ const EditAccountDialog = ({
 					error={!!errors[field.name]}
 					helperText={errors[field.name]}
 					disabled={saving}
+					slotProps={{ htmlInput: { maxLength: field.maxLength } }}
 					fullWidth
 				/>
 			))}

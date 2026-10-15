@@ -2,6 +2,9 @@ import { Stack, TextField } from '@mui/material';
 import type { ChangeEvent } from 'react';
 import type { VehicleErrors, VehicleForm } from '../../utils/vehicleForm';
 
+// Matches the server's 30-character limit on make, model, and color
+const TEXT_LIMIT = { slotProps: { htmlInput: { maxLength: 30 } } };
+
 interface VehicleFieldsProps {
 	form: VehicleForm;
 	errors: VehicleErrors;
@@ -34,6 +37,8 @@ const VehicleFields = ({
 				autoFocus
 				error={!!errors.plate}
 				helperText={errors.plate}
+				// Room for spaces or dashes ("ABC-1234"); the 8-character rule is checked after they're removed
+				slotProps={{ htmlInput: { maxLength: 10 } }}
 			/>
 			<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
 				<TextField
@@ -44,11 +49,11 @@ const VehicleFields = ({
 					error={!!errors.year}
 					helperText={errors.year}
 				/>
-				<TextField {...fieldProps('make')} label='Make' />
+				<TextField {...fieldProps('make')} label='Make' {...TEXT_LIMIT} />
 			</Stack>
 			<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-				<TextField {...fieldProps('model')} label='Model' />
-				<TextField {...fieldProps('color')} label='Color' />
+				<TextField {...fieldProps('model')} label='Model' {...TEXT_LIMIT} />
+				<TextField {...fieldProps('color')} label='Color' {...TEXT_LIMIT} />
 			</Stack>
 		</>
 	);
