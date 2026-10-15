@@ -25,3 +25,16 @@ export const fullName = (person: {
 	firstName: string;
 	lastName: string;
 }): string => `${person.firstName} ${person.lastName}`;
+
+// "2023 Honda Accord · Blue", skipping whatever wasn't recorded ('' if nothing was)
+export const describeVehicle = (vehicle: {
+	year?: number;
+	make?: string;
+	model?: string;
+	color?: string;
+}): string => {
+	const carName = [vehicle.year, vehicle.make, vehicle.model]
+		.filter(Boolean)
+		.join(' ');
+	return [carName, vehicle.color].filter(Boolean).join(' · ');
+};

@@ -14,3 +14,9 @@ export const addVehicle = (
 		method: 'POST',
 		body: JSON.stringify({ ...vehicle, plan }),
 	});
+
+// The server refuses (409) while the vehicle has an active or overdue membership
+export const removeVehicle = (customerId: string, vehicleId: string) =>
+	request<Customer>(`/customers/${customerId}/vehicles/${vehicleId}`, {
+		method: 'DELETE',
+	});

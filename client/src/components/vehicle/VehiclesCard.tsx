@@ -1,8 +1,9 @@
 import AddIcon from '@mui/icons-material/Add';
 import { Button, Divider, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
-import type { Customer } from '../../types';
+import type { Customer, Vehicle } from '../../types';
 import AddVehicleDialog from './AddVehicleDialog';
+import RemoveVehicleDialog from './RemoveVehicleDialog';
 import VehicleRow from './VehicleRow';
 
 interface VehiclesCardProps {
@@ -13,6 +14,8 @@ interface VehiclesCardProps {
 // Each car and its membership; vehicle actions start here
 const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 	const [adding, setAdding] = useState(false);
+	// The vehicle being confirmed for removal; null when no confirm dialog is open
+	const [removing, setRemoving] = useState<Vehicle | null>(null);
 
 	return (
 		<Paper>
@@ -43,7 +46,11 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 			) : (
 				<Stack divider={<Divider />}>
 					{customer.vehicles.map((vehicle) => (
-						<VehicleRow key={vehicle._id} vehicle={vehicle} />
+						<VehicleRow
+							key={vehicle._id}
+							vehicle={vehicle}
+							onRemove={setRemoving}
+						/>
 					))}
 				</Stack>
 			)}
@@ -54,6 +61,18 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 					onClose={() => setAdding(false)}
 					onSaved={(message) => {
 						setAdding(false);
+						onSaved(message);
+					}}
+				/>
+			)}
+
+			{removing && (
+				<RemoveVehicleDialog
+					customer={customer}
+					vehicle={removing}
+					onClose={() => setRemoving(null)}
+					onSaved={(message) => {
+						setRemoving(null);
 						onSaved(message);
 					}}
 				/>

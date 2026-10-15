@@ -13,6 +13,8 @@ import type { ReactNode, SubmitEvent } from 'react';
 interface FormDialogProps {
 	title: string;
 	submitLabel?: string;
+	// 'error' makes the button red for destructive actions like removing a vehicle
+	submitColor?: 'primary' | 'error';
 	saving: boolean;
 	serverError: string;
 	canSubmit: boolean;
@@ -26,6 +28,7 @@ interface FormDialogProps {
 const FormDialog = ({
 	title,
 	submitLabel = 'Save',
+	submitColor = 'primary',
 	saving,
 	serverError,
 	canSubmit,
@@ -57,6 +60,7 @@ const FormDialog = ({
 					<Button
 						type='submit'
 						variant='contained'
+						color={submitColor}
 						disabled={!canSubmit || saving}
 						startIcon={saving ? <CircularProgress size={16} /> : undefined}>
 						{submitLabel}

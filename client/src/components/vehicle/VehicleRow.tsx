@@ -1,7 +1,17 @@
-import { Box, Stack, Typography } from '@mui/material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {
+	Box,
+	IconButton,
+	ListItemText,
+	Menu,
+	MenuItem,
+	Stack,
+	Typography,
+} from '@mui/material';
+import { useState } from 'react';
 import PLANS from '../../constants/plans';
 import type { Subscription, Vehicle } from '../../types';
-import { formatDate, formatMoney } from '../../utils/format';
+import { describeVehicle, formatDate, formatMoney } from '../../utils/format';
 import PlateBadge from '../PlateBadge';
 import StatusChip from '../StatusChip';
 
@@ -21,55 +31,100 @@ const membershipDetail = (subscription: Subscription): string => {
 		: '';
 };
 
-const VehicleRow = ({ vehicle }: { vehicle: Vehicle }) => {
+interface VehicleRowProps {
+	vehicle: Vehicle;
+	onRemove: (vehicle: Vehicle) => void;
+}
+
+const VehicleRow = ({ vehicle, onRemove }: VehicleRowProps) => {
+	// The button the menu opens from; null means the menu is closed
+	const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 	const { subscription } = vehicle;
-	// All four fields are optional, so join only the ones that exist
-	const carName = [vehicle.year, vehicle.make, vehicle.model]
-		.filter(Boolean)
-		.join(' ');
-	const description = [carName, vehicle.color].filter(Boolean).join(' · ');
+	// Matches the server rule: active and overdue memberships must be cancelled or transferred first
+	const hasLiveMembership =
+		!!subscription && subscription.status !== 'cancelled';
 
 	return (
-		<Box
-			sx={{
-				display: 'flex',
-				flexWrap: 'wrap',
-				alignItems: 'center',
-				gap: 2,
-				px: 2.5,
-				py: 2,
-			}}>
-			<PlateBadge plate={vehicle.plate} />
-			<Typography sx={{ flexGrow: 1 }}>
-				{description || 'Vehicle details not recorded'}
-			</Typography>
+		<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 2.5, pr: 1 }}>
+			{/* Details wrap on narrow screens; the menu button stays pinned to the right */}
+			<Box
+				sx={{
+					display: 'flex',
+					flexWrap: 'wrap',
+					alignItems: 'center',
+					gap: 2,
+					flexGrow: 1,
+					py: 2,
+				}}>
+				<PlateBadge plate={vehicle.plate} />
+				<Typography sx={{ flexGrow: 1 }}>
+					{describeVehicle(vehicle) || 'Vehicle details not recorded'}
+				</Typography>
 
-			{subscription ? (
-				<Box sx={{ textAlign: { sm: 'right' } }}>
-					<Stack
-						direction='row'
-						spacing={1}
-						sx={{ alignItems: 'center', justifyContent: { sm: 'flex-end' } }}>
-						<Typography sx={{ fontWeight: 600 }}>
-							{`${PLANS[subscription.plan].name} ${formatMoney(subscription.price)}/mo`}
+				{subscription ? (
+					<Box sx={{ textAlign: { sm: 'right' } }}>
+						<Stack
+							direction='row'
+							spacing={1}
+							sx={{ alignItems: 'center', justifyContent: { sm: 'flex-end' } }}>
+							<Typography sx={{ fontWeight: 600 }}>
+								{`${PLANS[subscription.plan].name} ${formatMoney(subscription.price)}/mo`}
+							</Typography>
+							<StatusChip status={subscription.status} />
+						</Stack>
+						<Typography
+							variant='body2'
+							sx={{
+								mt: 0.5,
+								color:
+									subscription.status === 'overdue'
+										? 'error.main'
+										: 'text.secondary',
+							}}>
+							{membershipDetail(subscription)}
 						</Typography>
-						<StatusChip status={subscription.status} />
-					</Stack>
-					<Typography
-						variant='body2'
-						sx={{
-							mt: 0.5,
-							color:
-								subscription.status === 'overdue'
-									? 'error.main'
-									: 'text.secondary',
-						}}>
-						{membershipDetail(subscription)}
+					</Box>
+				) : (
+					<Typography sx={{ color: 'text.secondary' }}>
+						No membership
 					</Typography>
-				</Box>
-			) : (
-				<Typography sx={{ color: 'text.secondary' }}>No membership</Typography>
-			)}
+				)}
+			</Box>
+
+			<IconButton
+				aria-label={`Actions for ${vehicle.plate}`}
+				onClick={(event) => setMenuAnchor(event.currentTarget)}>
+				<MoreVertIcon />
+			</IconButton>
+			<Menu
+				anchorEl={menuAnchor}
+				open={menuAnchor !== null}
+				onClose={() => setMenuAnchor(null)}>
+				{/* Disabled with the reason shown, so the CSR knows what to do instead */}
+				<MenuItem
+					disabled={hasLiveMembership}
+					// MUI fades disabled items to 38%, which makes the reason hard to read;
+					// only the label is greyed out instead
+					sx={{ '&.Mui-disabled': { opacity: 1 } }}
+					onClick={() => {
+						setMenuAnchor(null);
+						onRemove(vehicle);
+					}}>
+					<ListItemText
+						primary='Remove vehicle'
+						slotProps={{
+							primary: {
+								sx: { color: hasLiveMembership ? 'text.disabled' : undefined },
+							},
+						}}
+						secondary={
+							hasLiveMembership
+								? 'Cancel or transfer the membership first'
+								: undefined
+						}
+					/>
+				</MenuItem>
+			</Menu>
 		</Box>
 	);
 };
