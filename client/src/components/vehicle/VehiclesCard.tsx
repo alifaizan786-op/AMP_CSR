@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Customer, Vehicle } from '../../types';
 import AddVehicleDialog from './AddVehicleDialog';
 import RemoveVehicleDialog from './RemoveVehicleDialog';
+import TransferDialog from './TransferDialog';
 import VehicleRow from './VehicleRow';
 
 interface VehiclesCardProps {
@@ -16,6 +17,8 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 	const [adding, setAdding] = useState(false);
 	// The vehicle being confirmed for removal; null when no confirm dialog is open
 	const [removing, setRemoving] = useState<Vehicle | null>(null);
+	// The vehicle whose membership is being transferred away
+	const [transferring, setTransferring] = useState<Vehicle | null>(null);
 
 	return (
 		<Paper>
@@ -49,6 +52,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						<VehicleRow
 							key={vehicle._id}
 							vehicle={vehicle}
+							onTransfer={setTransferring}
 							onRemove={setRemoving}
 						/>
 					))}
@@ -61,6 +65,18 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 					onClose={() => setAdding(false)}
 					onSaved={(message) => {
 						setAdding(false);
+						onSaved(message);
+					}}
+				/>
+			)}
+
+			{transferring && (
+				<TransferDialog
+					customer={customer}
+					vehicle={transferring}
+					onClose={() => setTransferring(null)}
+					onSaved={(message) => {
+						setTransferring(null);
 						onSaved(message);
 					}}
 				/>

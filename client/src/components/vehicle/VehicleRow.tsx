@@ -12,6 +12,7 @@ import { useState } from 'react';
 import PLANS from '../../constants/plans';
 import type { Subscription, Vehicle } from '../../types';
 import { describeVehicle, formatDate, formatMoney } from '../../utils/format';
+import { hasLiveMembership } from '../../utils/vehicleForm';
 import PlateBadge from '../PlateBadge';
 import StatusChip from '../StatusChip';
 
@@ -31,18 +32,49 @@ const membershipDetail = (subscription: Subscription): string => {
 		: '';
 };
 
+interface ActionItemProps {
+	label: string;
+	// When set, the action is unavailable and this says why (and what to do instead)
+	disabledReason?: string;
+	onClick: () => void;
+}
+
+const ActionItem = ({ label, disabledReason, onClick }: ActionItemProps) => (
+	<MenuItem
+		disabled={!!disabledReason}
+		// MUI fades disabled items to 38%, which makes the reason hard to read;
+		// only the label is greyed out instead
+		sx={{ '&.Mui-disabled': { opacity: 1 } }}
+		onClick={onClick}>
+		<ListItemText
+			primary={label}
+			secondary={disabledReason}
+			slotProps={{
+				primary: {
+					sx: { color: disabledReason ? 'text.disabled' : undefined },
+				},
+			}}
+		/>
+	</MenuItem>
+);
+
 interface VehicleRowProps {
 	vehicle: Vehicle;
+	onTransfer: (vehicle: Vehicle) => void;
 	onRemove: (vehicle: Vehicle) => void;
 }
 
-const VehicleRow = ({ vehicle, onRemove }: VehicleRowProps) => {
+const VehicleRow = ({ vehicle, onTransfer, onRemove }: VehicleRowProps) => {
 	// The button the menu opens from; null means the menu is closed
 	const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 	const { subscription } = vehicle;
-	// Matches the server rule: active and overdue memberships must be cancelled or transferred first
-	const hasLiveMembership =
-		!!subscription && subscription.status !== 'cancelled';
+	const isLive = hasLiveMembership(vehicle);
+
+	// Close the menu first, then hand the vehicle to the card that owns the dialogs
+	const runAction = (action: (vehicle: Vehicle) => void) => () => {
+		setMenuAnchor(null);
+		action(vehicle);
+	};
 
 	return (
 		<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 2.5, pr: 1 }}>
@@ -100,30 +132,21 @@ const VehicleRow = ({ vehicle, onRemove }: VehicleRowProps) => {
 				anchorEl={menuAnchor}
 				open={menuAnchor !== null}
 				onClose={() => setMenuAnchor(null)}>
-				{/* Disabled with the reason shown, so the CSR knows what to do instead */}
-				<MenuItem
-					disabled={hasLiveMembership}
-					// MUI fades disabled items to 38%, which makes the reason hard to read;
-					// only the label is greyed out instead
-					sx={{ '&.Mui-disabled': { opacity: 1 } }}
-					onClick={() => {
-						setMenuAnchor(null);
-						onRemove(vehicle);
-					}}>
-					<ListItemText
-						primary='Remove vehicle'
-						slotProps={{
-							primary: {
-								sx: { color: hasLiveMembership ? 'text.disabled' : undefined },
-							},
-						}}
-						secondary={
-							hasLiveMembership
-								? 'Cancel or transfer the membership first'
-								: undefined
-						}
-					/>
-				</MenuItem>
+				{/* Unavailable actions stay visible with the reason, so the CSR knows what to do instead */}
+				<ActionItem
+					label='Transfer membership'
+					disabledReason={
+						isLive ? undefined : 'No active membership to transfer'
+					}
+					onClick={runAction(onTransfer)}
+				/>
+				<ActionItem
+					label='Remove vehicle'
+					disabledReason={
+						isLive ? 'Cancel or transfer the membership first' : undefined
+					}
+					onClick={runAction(onRemove)}
+				/>
 			</Menu>
 		</Box>
 	);

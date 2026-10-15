@@ -1,13 +1,13 @@
-import type { PlanKey, VehicleInput } from '../types';
+import type { Vehicle, VehicleInput } from '../types';
 
-// What the CSR types; every field is a string until we build the request
+// What the CSR types for a vehicle; every field is a string until we build the request.
+// The plan is separate, since only adding a vehicle picks one.
 export interface VehicleForm {
 	plate: string;
 	year: string;
 	make: string;
 	model: string;
 	color: string;
-	plan: PlanKey | '';
 }
 
 export type VehicleErrors = Partial<Record<'plate' | 'year', string>>;
@@ -18,7 +18,6 @@ export const EMPTY_VEHICLE_FORM: VehicleForm = {
 	make: '',
 	model: '',
 	color: '',
-	plan: '',
 };
 
 // Same as the server's setter: "abc-123" and "ABC 123" are the same plate
@@ -54,3 +53,7 @@ export const toVehicleInput = (form: VehicleForm): VehicleInput => {
 	if (form.color.trim()) input.color = form.color.trim();
 	return input;
 };
+
+// Matches the server rule: active and overdue memberships are live; cancelled ones are finished
+export const hasLiveMembership = (vehicle: Vehicle): boolean =>
+	!!vehicle.subscription && vehicle.subscription.status !== 'cancelled';

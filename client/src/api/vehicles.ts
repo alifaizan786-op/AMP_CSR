@@ -20,3 +20,23 @@ export const removeVehicle = (customerId: string, vehicleId: string) =>
 	request<Customer>(`/customers/${customerId}/vehicles/${vehicleId}`, {
 		method: 'DELETE',
 	});
+
+// Either an existing vehicle on the account or a new one, never both (mirrors the server rule)
+export type TransferTarget =
+	| { toVehicleId: string }
+	| { vehicle: VehicleInput };
+
+// Moves the membership as-is (plan, price, billing date, status); no charge
+export const transferMembership = (
+	customerId: string,
+	vehicleId: string,
+	target: TransferTarget,
+	removeOldVehicle: boolean,
+) =>
+	request<Customer>(
+		`/customers/${customerId}/vehicles/${vehicleId}/subscription/transfer`,
+		{
+			method: 'POST',
+			body: JSON.stringify({ ...target, removeOldVehicle }),
+		},
+	);
