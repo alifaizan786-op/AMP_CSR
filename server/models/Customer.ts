@@ -68,17 +68,13 @@ const customerSchema = new Schema(
 		},
 		vehicles: [vehicleSchema],
 	},
-	{ timestamps: true, toJSON: { virtuals: true } },
+	{ timestamps: true },
 );
 
 // Indexes on the fields CSRs search and filter by
 customerSchema.index({ phone: 1 });
 customerSchema.index({ 'vehicles.plate': 1 });
 customerSchema.index({ status: 1 });
-
-customerSchema.virtual('fullName').get(function () {
-	return `${this.firstName} ${this.lastName}`;
-});
 
 // Status is derived from subscriptions so it can never drift out of sync.
 // Overdue wins, since it's the status a CSR most needs to see.

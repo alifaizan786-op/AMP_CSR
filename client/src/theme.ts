@@ -1,7 +1,7 @@
 import { createTheme } from '@mui/material/styles';
 
 // Status colors carry the meaning; everything else stays quiet
-export const colors = {
+const colors = {
 	ink: '#17202A',
 	muted: '#5B6673',
 	surface: '#F2F5F7',

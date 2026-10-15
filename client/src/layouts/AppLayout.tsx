@@ -1,15 +1,10 @@
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
+import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
-import { colors } from '../theme';
 
 // Top bar shared by every page; <Outlet /> is where the current page renders
 const AppLayout = () => (
 	<Box sx={{ minHeight: '100vh' }}>
-		<AppBar position='static' elevation={0} sx={{ bgcolor: colors.ink }}>
+		<AppBar position='static' elevation={0} sx={{ bgcolor: 'text.primary' }}>
 			<Toolbar variant='dense'>
 				<Typography
 					component={RouterLink}
