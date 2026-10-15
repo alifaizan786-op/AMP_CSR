@@ -1,9 +1,10 @@
 import type {
 	AccountFields,
+	Activity,
 	Customer,
 	CustomerDetailResponse,
 	CustomerListResponse,
-	CustomerStatus,
+	CustomerStatus
 } from '../types';
 import { request } from './client';
 
@@ -36,4 +37,12 @@ export const updateCustomer = (id: string, fields: Partial<AccountFields>) =>
 	request<Customer>(`/customers/${id}`, {
 		method: 'PATCH',
 		body: JSON.stringify(fields),
+	});
+
+
+	// Returns the new activity entry, not the customer
+export const addNote = (customerId: string, message: string) =>
+	request<Activity>(`/customers/${customerId}/notes`, {
+		method: 'POST',
+		body: JSON.stringify({ message }),
 	});

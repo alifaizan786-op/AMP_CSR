@@ -155,7 +155,11 @@ const CustomerDetailPage = () => {
 				<Grid size={{ xs: 12, md: 4 }} sx={{ order: { md: 2 } }}>
 					<Stack spacing={3}>
 						<AccountCard customer={customer} onSaved={handleSaved} />
-						<ActivityList activities={data.activities} />
+						<ActivityList
+							customerId={customer._id}
+							activities={data.activities}
+							onSaved={handleSaved}
+						/>
 					</Stack>
 				</Grid>
 				<Grid size={{ xs: 12, md: 8 }}>

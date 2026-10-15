@@ -40,3 +40,11 @@ export const transferMembership = (
 			body: JSON.stringify({ ...target, removeOldVehicle }),
 		},
 	);
+
+// Only allowed while overdue. Billing is simulated: it records a successful charge
+// and sets the membership active with the next billing date a month out.
+export const retryPayment = (customerId: string, vehicleId: string) =>
+	request<Customer>(
+		`/customers/${customerId}/vehicles/${vehicleId}/subscription/retry-payment`,
+		{ method: 'POST' },
+	);

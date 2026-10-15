@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Customer, Vehicle } from '../../types';
 import AddVehicleDialog from './AddVehicleDialog';
 import RemoveVehicleDialog from './RemoveVehicleDialog';
+import RetryPaymentDialog from './RetryPaymentDialog';
 import TransferDialog from './TransferDialog';
 import VehicleRow from './VehicleRow';
 
@@ -19,6 +20,8 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 	const [removing, setRemoving] = useState<Vehicle | null>(null);
 	// The vehicle whose membership is being transferred away
 	const [transferring, setTransferring] = useState<Vehicle | null>(null);
+	// The overdue vehicle whose payment is being retried
+	const [retrying, setRetrying] = useState<Vehicle | null>(null);
 
 	return (
 		<Paper>
@@ -52,6 +55,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						<VehicleRow
 							key={vehicle._id}
 							vehicle={vehicle}
+							onRetry={setRetrying}
 							onTransfer={setTransferring}
 							onRemove={setRemoving}
 						/>
@@ -65,6 +69,18 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 					onClose={() => setAdding(false)}
 					onSaved={(message) => {
 						setAdding(false);
+						onSaved(message);
+					}}
+				/>
+			)}
+
+			{retrying && (
+				<RetryPaymentDialog
+					customer={customer}
+					vehicle={retrying}
+					onClose={() => setRetrying(null)}
+					onSaved={(message) => {
+						setRetrying(null);
 						onSaved(message);
 					}}
 				/>

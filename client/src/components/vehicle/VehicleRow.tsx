@@ -60,15 +60,22 @@ const ActionItem = ({ label, disabledReason, onClick }: ActionItemProps) => (
 
 interface VehicleRowProps {
 	vehicle: Vehicle;
+	onRetry: (vehicle: Vehicle) => void;
 	onTransfer: (vehicle: Vehicle) => void;
 	onRemove: (vehicle: Vehicle) => void;
 }
 
-const VehicleRow = ({ vehicle, onTransfer, onRemove }: VehicleRowProps) => {
+const VehicleRow = ({
+	vehicle,
+	onRetry,
+	onTransfer,
+	onRemove,
+}: VehicleRowProps) => {
 	// The button the menu opens from; null means the menu is closed
 	const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 	const { subscription } = vehicle;
 	const isLive = hasLiveMembership(vehicle);
+	const isOverdue = subscription?.status === 'overdue';
 
 	// Close the menu first, then hand the vehicle to the card that owns the dialogs
 	const runAction = (action: (vehicle: Vehicle) => void) => () => {
@@ -132,6 +139,11 @@ const VehicleRow = ({ vehicle, onTransfer, onRemove }: VehicleRowProps) => {
 				anchorEl={menuAnchor}
 				open={menuAnchor !== null}
 				onClose={() => setMenuAnchor(null)}>
+				<ActionItem
+					label='Retry payment'
+					disabledReason={isOverdue ? undefined : 'No overdue payment'}
+					onClick={runAction(onRetry)}
+				/>
 				{/* Unavailable actions stay visible with the reason, so the CSR knows what to do instead */}
 				<ActionItem
 					label='Transfer membership'
