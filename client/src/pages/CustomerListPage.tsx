@@ -1,7 +1,9 @@
+import SearchIcon from '@mui/icons-material/Search';
 import {
 	Alert,
 	Box,
 	Button,
+	InputAdornment,
 	LinearProgress,
 	Paper,
 	Stack,
@@ -10,13 +12,15 @@ import {
 	TableCell,
 	TableHead,
 	TableRow,
+	TextField,
 	Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCustomers } from '../api/customers';
 import PlateBadge from '../components/PlateBadge';
 import StatusChip from '../components/StatusChip';
+import useDebounce from '../hooks/useDebounce';
 import type { CustomerListResponse } from '../types';
 import { formatPhone, fullName } from '../utils/format';
 
@@ -24,38 +28,79 @@ const MAX_PLATES_SHOWN = 2;
 
 const CustomerListPage = () => {
 	const navigate = useNavigate();
+	// The search lives in the URL (?search=jordan), so refresh and the back button keep it
+	const [searchParams, setSearchParams] = useSearchParams();
+	const search = searchParams.get('search') ?? '';
+
+	// What's typed in the box updates instantly; the URL only updates once typing pauses
+	const [searchInput, setSearchInput] = useState(search);
+	const debouncedSearch = useDebounce(searchInput.trim());
+
+	useEffect(() => {
+		if (debouncedSearch === search) return;
+		// replace: true so each search doesn't add a new entry to the browser history
+		setSearchParams(debouncedSearch ? { search: debouncedSearch } : {}, {
+			replace: true,
+		});
+	}, [debouncedSearch, search, setSearchParams]);
 
 	const [data, setData] = useState<CustomerListResponse | null>(null);
 	const [error, setError] = useState('');
 
 	// Bumping this number re-runs the fetch, which is how "Try again" works
-	const [requestId, setRequestId] = useState(0);
-	// Which request the current data or error belongs to; anything else means we're still loading
-	const [loadedRequestId, setLoadedRequestId] = useState(-1);
-	const loading = loadedRequestId !== requestId;
+	const [retryCount, setRetryCount] = useState(0);
+
+	// Identifies the request we want: a new search or a retry makes a new key.
+	// We're loading until the data (or error) we have belongs to that key.
+	const requestKey = `${search}|${retryCount}`;
+	const [loadedKey, setLoadedKey] = useState('');
+	const loading = loadedKey !== requestKey;
 
 	useEffect(() => {
 		const controller = new AbortController();
+		const key = `${search}|${retryCount}`;
 
-		getCustomers({}, controller.signal)
+		getCustomers({ search }, controller.signal)
 			.then((response) => {
 				setData(response);
 				setError('');
-				setLoadedRequestId(requestId);
+				setLoadedKey(key);
 			})
 			.catch((err: Error) => {
 				// An aborted request was replaced by a newer one, so its result doesn't matter
 				if (err.name === 'AbortError') return;
 				setError(err.message);
-				setLoadedRequestId(requestId);
+				setLoadedKey(key);
 			});
 
 		return () => controller.abort();
-	}, [requestId]);
+	}, [search, retryCount]);
 
 	return (
 		<Stack spacing={3}>
-			<Typography variant='h1'>Customers</Typography>
+			<Box>
+				<Typography variant='h1' gutterBottom>
+					Customers
+				</Typography>
+				<TextField
+					fullWidth
+					autoFocus
+					placeholder='Search by name, phone, email, or plate'
+					value={searchInput}
+					onChange={(event) => setSearchInput(event.target.value)}
+					slotProps={{
+						input: {
+							startAdornment: (
+								<InputAdornment position='start'>
+									<SearchIcon />
+								</InputAdornment>
+							),
+						},
+						htmlInput: { 'aria-label': 'Search customers' },
+					}}
+					sx={{ bgcolor: 'background.paper' }}
+				/>
+			</Box>
 
 			<Paper>
 				{/* Fixed-height slot so the table doesn't jump when the progress bar appears */}
@@ -69,7 +114,7 @@ const CustomerListPage = () => {
 							<Button
 								color='inherit'
 								size='small'
-								onClick={() => setRequestId(requestId + 1)}>
+								onClick={() => setRetryCount(retryCount + 1)}>
 								Try again
 							</Button>
 						}>
@@ -152,12 +197,19 @@ const CustomerListPage = () => {
 									</TableRow>
 								))}
 
-								{data?.customers.length === 0 && (
+								{data?.customers.length === 0 && !loading && (
 									<TableRow>
 										<TableCell colSpan={4} sx={{ py: 6, textAlign: 'center' }}>
-											<Typography color='text.secondary'>
-												No customers found
+											<Typography sx={{ fontWeight: 600 }}>
+												{search
+													? `No customers match "${search}"`
+													: 'No customers found'}
 											</Typography>
+											{search && (
+												<Typography variant='body2' color='text.secondary'>
+													Try a phone number, email, or license plate instead.
+												</Typography>
+											)}
 										</TableCell>
 									</TableRow>
 								)}
