@@ -265,7 +265,12 @@ const CustomerListPage = () => {
 									<TableRow
 										key={customer._id}
 										hover
-										onClick={() => navigate(`/customers/${customer._id}`)}
+										// Pass the current search so the detail page's Back link returns here
+										onClick={() =>
+											navigate(`/customers/${customer._id}`, {
+												state: { listSearch: searchParams.toString() },
+											})
+										}
 										sx={{
 											cursor: 'pointer',
 											// Red left edge makes overdue accounts easy to spot while scanning
