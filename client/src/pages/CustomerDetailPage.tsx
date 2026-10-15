@@ -15,7 +15,9 @@ import { Link as RouterLink, useLocation, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { getCustomer } from '../api/customers';
 import AccountCard from '../components/customer/AccountCard';
+import ActivityList from '../components/customer/ActivityList';
 import OverdueBanner from '../components/customer/OverdueBanner';
+import PurchaseTable from '../components/customer/PurchaseTable';
 import VehicleRow from '../components/customer/VehicleRow';
 import StatusChip from '../components/StatusChip';
 import type { CustomerDetailResponse } from '../types';
@@ -141,25 +143,31 @@ const CustomerDetailPage = () => {
 
 			<Grid container spacing={3}>
 				<Grid size={{ xs: 12, md: 4 }} sx={{ order: { md: 2 } }}>
-					<AccountCard customer={customer} />
+					<Stack spacing={3}>
+						<AccountCard customer={customer} />
+						<ActivityList activities={data.activities} />
+					</Stack>
 				</Grid>
 				<Grid size={{ xs: 12, md: 8 }}>
-					<Paper>
-						<Typography variant='h2' sx={{ px: 2.5, pt: 2.5, pb: 1 }}>
-							Vehicles ({customer.vehicles.length})
-						</Typography>
-						{customer.vehicles.length === 0 ? (
-							<Typography sx={{ color: 'text.secondary', px: 2.5, pb: 2.5 }}>
-								No vehicles on this account.
+					<Stack spacing={3}>
+						<Paper>
+							<Typography variant='h2' sx={{ px: 2.5, pt: 2.5, pb: 1 }}>
+								Vehicles ({customer.vehicles.length})
 							</Typography>
-						) : (
-							<Stack divider={<Divider />}>
-								{customer.vehicles.map((vehicle) => (
-									<VehicleRow key={vehicle._id} vehicle={vehicle} />
-								))}
-							</Stack>
-						)}
-					</Paper>
+							{customer.vehicles.length === 0 ? (
+								<Typography sx={{ color: 'text.secondary', px: 2.5, pb: 2.5 }}>
+									No vehicles on this account.
+								</Typography>
+							) : (
+								<Stack divider={<Divider />}>
+									{customer.vehicles.map((vehicle) => (
+										<VehicleRow key={vehicle._id} vehicle={vehicle} />
+									))}
+								</Stack>
+							)}
+						</Paper>
+						<PurchaseTable purchases={data.purchases} />
+					</Stack>
 				</Grid>
 			</Grid>
 		</>

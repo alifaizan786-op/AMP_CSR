@@ -1,4 +1,12 @@
-import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material';
+import {
+	AppBar,
+	Box,
+	Container,
+	LinearProgress,
+	Toolbar,
+	Typography,
+} from '@mui/material';
+import { Suspense } from 'react';
 import { Outlet, Link as RouterLink } from 'react-router-dom';
 
 // Top bar shared by every page; <Outlet /> is where the current page renders
@@ -15,7 +23,9 @@ const AppLayout = () => (
 			</Toolbar>
 		</AppBar>
 		<Container maxWidth='lg' sx={{ py: 4 }}>
-			<Outlet />
+			<Suspense fallback={<LinearProgress />}>
+				<Outlet />
+			</Suspense>
 		</Container>
 	</Box>
 );

@@ -1,7 +1,9 @@
+import { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
-import CustomerDetailPage from './pages/CustomerDetailPage';
-import CustomerListPage from './pages/CustomerListPage';
+// Each page becomes its own file that downloads the first time the route is visited
+const CustomerListPage = lazy(() => import('./pages/CustomerListPage'));
+const CustomerDetailPage = lazy(() => import('./pages/CustomerDetailPage'));
 
 const App = () => (
 	<Routes>
