@@ -1,4 +1,6 @@
 import type {
+	AccountFields,
+	Customer,
 	CustomerDetailResponse,
 	CustomerListResponse,
 	CustomerStatus,
@@ -28,3 +30,10 @@ export const getCustomers = (
 
 export const getCustomer = (id: string, signal?: AbortSignal) =>
 	request<CustomerDetailResponse>(`/customers/${id}`, { signal });
+
+// PATCH sends only the fields that changed; the server returns the updated customer
+export const updateCustomer = (id: string, fields: Partial<AccountFields>) =>
+	request<Customer>(`/customers/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(fields),
+	});

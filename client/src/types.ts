@@ -81,3 +81,9 @@ export interface CustomerDetailResponse {
 	purchases: Purchase[];
 	activities: Activity[];
 }
+
+// The account fields a CSR can edit (matches the server's EDITABLE_FIELDS)
+export type AccountFields = Pick<
+	Customer,
+	'firstName' | 'lastName' | 'email' | 'phone'
+>;

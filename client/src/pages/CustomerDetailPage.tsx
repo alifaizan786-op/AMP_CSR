@@ -7,6 +7,7 @@ import {
 	Divider,
 	Grid,
 	Paper,
+	Snackbar,
 	Stack,
 	Typography,
 } from '@mui/material';
@@ -37,17 +38,20 @@ const CustomerDetailPage = () => {
 	const [data, setData] = useState<CustomerDetailResponse | null>(null);
 	const [error, setError] = useState('');
 	const [notFound, setNotFound] = useState(false);
-	const [retryCount, setRetryCount] = useState(0);
+	const [reloadCount, setReloadCount] = useState(0);
 	const [loadedKey, setLoadedKey] = useState('');
+	const [toast, setToast] = useState('');
 
 	// ---- Derived ----
-	const requestKey = `${id}|${retryCount}`;
+	const requestKey = `${id}|${reloadCount}`;
 	const loading = loadedKey !== requestKey;
+	// After a save we refetch quietly: keep showing the current customer instead of a spinner
+	const hasData = data?.customer._id === id;
 
 	// ---- Effects ----
 	useEffect(() => {
 		const controller = new AbortController();
-		const key = `${id}|${retryCount}`;
+		const key = `${id}|${reloadCount}`;
 
 		getCustomer(id, controller.signal)
 			.then((response) => {
@@ -67,7 +71,14 @@ const CustomerDetailPage = () => {
 			});
 
 		return () => controller.abort();
-	}, [id, retryCount]);
+	}, [id, reloadCount]);
+
+	// ---- Handlers ----
+	// A save can also add activity entries or purchases, so refetch everything rather than patch pieces
+	const handleSaved = (message: string) => {
+		setToast(message);
+		setReloadCount((count) => count + 1);
+	};
 
 	const backButton = (
 		<Button
@@ -80,7 +91,7 @@ const CustomerDetailPage = () => {
 		</Button>
 	);
 
-	if (loading) {
+	if (loading && !hasData) {
 		return (
 			<>
 				{backButton}
@@ -115,7 +126,7 @@ const CustomerDetailPage = () => {
 						<Button
 							color='inherit'
 							size='small'
-							onClick={() => setRetryCount(retryCount + 1)}>
+							onClick={() => setReloadCount(reloadCount + 1)}>
 							Try again
 						</Button>
 					}>
@@ -144,7 +155,7 @@ const CustomerDetailPage = () => {
 			<Grid container spacing={3}>
 				<Grid size={{ xs: 12, md: 4 }} sx={{ order: { md: 2 } }}>
 					<Stack spacing={3}>
-						<AccountCard customer={customer} />
+						<AccountCard customer={customer} onSaved={handleSaved} />
 						<ActivityList activities={data.activities} />
 					</Stack>
 				</Grid>
@@ -170,6 +181,13 @@ const CustomerDetailPage = () => {
 					</Stack>
 				</Grid>
 			</Grid>
+			<Snackbar
+				open={!!toast}
+				autoHideDuration={4000}
+				onClose={() => setToast('')}
+				message={toast}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+			/>
 		</>
 	);
 };
