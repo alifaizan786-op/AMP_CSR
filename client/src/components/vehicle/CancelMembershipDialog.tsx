@@ -1,14 +1,12 @@
-import { Alert, TextField, Typography } from '@mui/material';
+import { Alert, Typography } from '@mui/material';
 import { useState } from 'react';
 import { describeWriteError } from '../../api/client';
 import { cancelMembership } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
 import type { Customer, Vehicle } from '../../types';
 import { formatMoney } from '../../utils/format';
+import CancelReasonField from '../CancelReasonField';
 import FormDialog from '../FormDialog';
-
-// Matches the server's limit
-const MAX_REASON_LENGTH = 200;
 
 interface CancelMembershipDialogProps {
 	customer: Customer;
@@ -85,17 +83,10 @@ const CancelMembershipDialog = ({
 				</Alert>
 			)}
 
-			<TextField
-				label='Reason'
-				placeholder='e.g. Moving out of the area'
+			<CancelReasonField
 				value={reason}
-				onChange={(event) => setReason(event.target.value)}
-				autoFocus
-				required
-				fullWidth
+				onChange={setReason}
 				disabled={saving}
-				slotProps={{ htmlInput: { maxLength: MAX_REASON_LENGTH } }}
-				helperText={`${reason.length}/${MAX_REASON_LENGTH}`}
 			/>
 		</FormDialog>
 	);

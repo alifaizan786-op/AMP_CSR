@@ -154,7 +154,11 @@ const CustomerDetailPage = () => {
 			<Grid container spacing={3}>
 				<Grid size={{ xs: 12, md: 4 }} sx={{ order: { md: 2 } }}>
 					<Stack spacing={3}>
-						<AccountCard customer={customer} onSaved={handleSaved} />
+						<AccountCard
+							customer={customer}
+							onSaved={handleSaved}
+							onStale={() => setReloadCount((count) => count + 1)}
+						/>
 						<ActivityList
 							customerId={customer._id}
 							activities={data.activities}

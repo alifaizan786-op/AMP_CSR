@@ -1,18 +1,32 @@
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { Button, Link, Paper, Stack, Typography } from '@mui/material';
+import {
+	Box,
+	Button,
+	Divider,
+	Link,
+	Paper,
+	Stack,
+	Tooltip,
+	Typography,
+} from '@mui/material';
 import { useState } from 'react';
 import type { Customer } from '../../types';
 import { formatPhone } from '../../utils/format';
+import { hasLiveMembership } from '../../utils/vehicleForm';
+import CancelAccountDialog from './CancelAccountDialog';
 import EditAccountDialog from './EditAccountDialog';
 
 interface AccountCardProps {
 	customer: Customer;
 	onSaved: (message: string) => void;
+	onStale: () => void;
 }
 
 // Contact details a CSR confirms at the start of a call, and where they correct them
-const AccountCard = ({ customer, onSaved }: AccountCardProps) => {
+const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 	const [editing, setEditing] = useState(false);
+	const [cancelling, setCancelling] = useState(false);
+	const hasLive = customer.vehicles.some(hasLiveMembership);
 
 	const rows = [
 		{
@@ -55,6 +69,22 @@ const AccountCard = ({ customer, onSaved }: AccountCardProps) => {
 				))}
 			</Stack>
 
+			{/* Set apart from Edit and in red, since it ends every membership on the account.
+			    Always visible; when there's nothing to cancel, the tooltip says so. */}
+			<Divider sx={{ my: 2 }} />
+			<Tooltip title={hasLive ? '' : 'No active memberships to cancel'}>
+				{/* A disabled button ignores the mouse, so the span is what shows the tooltip */}
+				<Box component='span' sx={{ display: 'inline-block' }}>
+					<Button
+						size='small'
+						color='error'
+						disabled={!hasLive}
+						onClick={() => setCancelling(true)}>
+						Cancel account
+					</Button>
+				</Box>
+			</Tooltip>
+
 			{editing && (
 				<EditAccountDialog
 					customer={customer}
@@ -63,6 +93,18 @@ const AccountCard = ({ customer, onSaved }: AccountCardProps) => {
 						setEditing(false);
 						onSaved('Account updated');
 					}}
+				/>
+			)}
+
+			{cancelling && (
+				<CancelAccountDialog
+					customer={customer}
+					onClose={() => setCancelling(false)}
+					onSaved={(message) => {
+						setCancelling(false);
+						onSaved(message);
+					}}
+					onStale={onStale}
 				/>
 			)}
 		</Paper>

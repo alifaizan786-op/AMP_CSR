@@ -4,7 +4,7 @@ import type {
 	Customer,
 	CustomerDetailResponse,
 	CustomerListResponse,
-	CustomerStatus
+	CustomerStatus,
 } from '../types';
 import { request } from './client';
 
@@ -39,10 +39,16 @@ export const updateCustomer = (id: string, fields: Partial<AccountFields>) =>
 		body: JSON.stringify(fields),
 	});
 
-
-	// Returns the new activity entry, not the customer
+// Returns the new activity entry, not the customer
 export const addNote = (customerId: string, message: string) =>
 	request<Activity>(`/customers/${customerId}/notes`, {
 		method: 'POST',
 		body: JSON.stringify({ message }),
+	});
+
+// Cancels every active and overdue membership in one request; the account and its history stay
+export const cancelAccount = (id: string, reason: string) =>
+	request<Customer>(`/customers/${id}/cancel`, {
+		method: 'POST',
+		body: JSON.stringify({ reason }),
 	});
