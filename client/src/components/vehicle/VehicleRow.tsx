@@ -1,5 +1,7 @@
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
 import BlockIcon from '@mui/icons-material/Block';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ReplayIcon from '@mui/icons-material/Replay';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -90,6 +92,8 @@ const GroupLabel = ({ children }: { children: string }) => (
 
 interface VehicleRowProps {
 	vehicle: Vehicle;
+	onStart: (vehicle: Vehicle) => void;
+	onChangePlan: (vehicle: Vehicle) => void;
 	onRetry: (vehicle: Vehicle) => void;
 	onTransfer: (vehicle: Vehicle) => void;
 	onCancel: (vehicle: Vehicle) => void;
@@ -98,6 +102,8 @@ interface VehicleRowProps {
 
 const VehicleRow = ({
 	vehicle,
+	onStart,
+	onChangePlan,
 	onRetry,
 	onTransfer,
 	onCancel,
@@ -179,6 +185,26 @@ const VehicleRow = ({
 				onClose={() => setMenuAnchor(null)}
 				slotProps={{ paper: { sx: { width: 320 } } }}>
 				<GroupLabel>Membership</GroupLabel>
+				<ActionItem
+					label='Start membership'
+					icon={<AddCircleOutlineIcon fontSize='small' />}
+					disabledReason={
+						isLive ? 'Already has a membership. Use Change plan' : undefined
+					}
+					onClick={runAction(onStart)}
+				/>
+				<ActionItem
+					label='Change plan'
+					icon={<EditOutlinedIcon fontSize='small' />}
+					disabledReason={
+						!isLive
+							? 'No active membership to change'
+							: isOverdue
+								? 'Resolve the overdue payment first'
+								: undefined
+					}
+					onClick={runAction(onChangePlan)}
+				/>
 				<ActionItem
 					label='Transfer membership'
 					icon={<SwapHorizIcon fontSize='small' />}

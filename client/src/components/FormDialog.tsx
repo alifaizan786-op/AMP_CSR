@@ -17,6 +17,8 @@ interface FormDialogProps {
 	submitColor?: 'primary' | 'error';
 	// Renamed where "Cancel" would be confusing, e.g. next to "Cancel membership"
 	cancelLabel?: string;
+	// Wider for content like plan cards; most dialogs are a few fields
+	maxWidth?: 'xs' | 'md';
 	saving: boolean;
 	serverError: string;
 	canSubmit: boolean;
@@ -32,6 +34,7 @@ const FormDialog = ({
 	submitLabel = 'Save',
 	submitColor = 'primary',
 	cancelLabel = 'Cancel',
+	maxWidth = 'xs',
 	saving,
 	serverError,
 	canSubmit,
@@ -46,7 +49,11 @@ const FormDialog = ({
 	};
 
 	return (
-		<Dialog open onClose={saving ? undefined : onClose} fullWidth maxWidth='xs'>
+		<Dialog
+			open
+			onClose={saving ? undefined : onClose}
+			fullWidth
+			maxWidth={maxWidth}>
 			{/* A real form, so Enter submits; noValidate so our messages show instead of the browser's */}
 			<form onSubmit={handleSubmit} noValidate>
 				<DialogTitle>{title}</DialogTitle>

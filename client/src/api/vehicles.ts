@@ -60,3 +60,25 @@ export const cancelMembership = (
 		`/customers/${customerId}/vehicles/${vehicleId}/subscription/cancel`,
 		{ method: 'POST', body: JSON.stringify({ reason }) },
 	);
+
+// For a vehicle without a live membership; charges the first month right away
+export const startMembership = (
+	customerId: string,
+	vehicleId: string,
+	plan: PlanKey,
+) =>
+	request<Customer>(
+		`/customers/${customerId}/vehicles/${vehicleId}/subscription`,
+		{ method: 'POST', body: JSON.stringify({ plan }) },
+	);
+
+// No charge; the new price applies from the next billing date. Refused (409) while overdue.
+export const changePlan = (
+	customerId: string,
+	vehicleId: string,
+	plan: PlanKey,
+) =>
+	request<Customer>(
+		`/customers/${customerId}/vehicles/${vehicleId}/subscription`,
+		{ method: 'PATCH', body: JSON.stringify({ plan }) },
+	);

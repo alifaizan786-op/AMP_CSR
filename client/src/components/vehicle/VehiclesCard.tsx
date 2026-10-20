@@ -4,8 +4,10 @@ import { useState } from 'react';
 import type { Customer, Vehicle } from '../../types';
 import AddVehicleDialog from './AddVehicleDialog';
 import CancelMembershipDialog from './CancelMembershipDialog';
+import ChangePlanDialog from './ChangePlanDialog';
 import RemoveVehicleDialog from './RemoveVehicleDialog';
 import RetryPaymentDialog from './RetryPaymentDialog';
+import StartMembershipDialog from './StartMembershipDialog';
 import TransferDialog from './TransferDialog';
 import VehicleRow from './VehicleRow';
 
@@ -19,6 +21,10 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 	const [adding, setAdding] = useState(false);
 	// The vehicle being confirmed for removal; null when no confirm dialog is open
 	const [removing, setRemoving] = useState<Vehicle | null>(null);
+	// The vehicle a membership is being started on
+	const [starting, setStarting] = useState<Vehicle | null>(null);
+	// The vehicle whose plan is being changed
+	const [changing, setChanging] = useState<Vehicle | null>(null);
 	// The vehicle whose membership is being transferred away
 	const [transferring, setTransferring] = useState<Vehicle | null>(null);
 	// The overdue vehicle whose payment is being retried
@@ -58,6 +64,8 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						<VehicleRow
 							key={vehicle._id}
 							vehicle={vehicle}
+							onStart={setStarting}
+							onChangePlan={setChanging}
 							onRetry={setRetrying}
 							onTransfer={setTransferring}
 							onCancel={setCancelling}
@@ -73,6 +81,30 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 					onClose={() => setAdding(false)}
 					onSaved={(message) => {
 						setAdding(false);
+						onSaved(message);
+					}}
+				/>
+			)}
+
+			{starting && (
+				<StartMembershipDialog
+					customer={customer}
+					vehicle={starting}
+					onClose={() => setStarting(null)}
+					onSaved={(message) => {
+						setStarting(null);
+						onSaved(message);
+					}}
+				/>
+			)}
+
+			{changing && (
+				<ChangePlanDialog
+					customer={customer}
+					vehicle={changing}
+					onClose={() => setChanging(null)}
+					onSaved={(message) => {
+						setChanging(null);
 						onSaved(message);
 					}}
 				/>
