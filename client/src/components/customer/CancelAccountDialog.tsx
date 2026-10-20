@@ -29,8 +29,11 @@ const CancelAccountDialog = ({
 	const [reason, setReason] = useState('');
 	const [serverError, setServerError] = useState('');
 	const [saving, setSaving] = useState(false);
+	// Set when the save failed because the account changed elsewhere; there's nothing left to retry
+	const [conflicted, setConflicted] = useState(false);
 
-	const live = customer.vehicles.filter(hasLiveMembership);
+	// A snapshot from when the dialog opened, so a refresh after a conflict doesn't empty the list
+	const [live] = useState(() => customer.vehicles.filter(hasLiveMembership));
 	let unpaid = 0;
 	for (let i = 0; i < live.length; i++) {
 		const subscription = live[i].subscription;
@@ -54,7 +57,10 @@ const CancelAccountDialog = ({
 			// e.g. 409 if the memberships were already cancelled elsewhere
 			const { message, stale } = describeWriteError(err);
 			setServerError(message);
-			if (stale) onStale();
+			if (stale) {
+				setConflicted(true);
+				onStale();
+			}
 			setSaving(false);
 		}
 	};
@@ -69,7 +75,7 @@ const CancelAccountDialog = ({
 			cancelLabel='Keep account'
 			saving={saving}
 			serverError={serverError}
-			canSubmit={reason.trim() !== ''}
+			canSubmit={reason.trim() !== '' && !conflicted}
 			onSubmit={handleSubmit}
 			onClose={onClose}>
 			<Typography>
