@@ -3,6 +3,7 @@ import { Button, Divider, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import type { Customer, Vehicle } from '../../types';
 import AddVehicleDialog from './AddVehicleDialog';
+import CancelMembershipDialog from './CancelMembershipDialog';
 import RemoveVehicleDialog from './RemoveVehicleDialog';
 import RetryPaymentDialog from './RetryPaymentDialog';
 import TransferDialog from './TransferDialog';
@@ -22,6 +23,8 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 	const [transferring, setTransferring] = useState<Vehicle | null>(null);
 	// The overdue vehicle whose payment is being retried
 	const [retrying, setRetrying] = useState<Vehicle | null>(null);
+	// The vehicle whose membership is being cancelled
+	const [cancelling, setCancelling] = useState<Vehicle | null>(null);
 
 	return (
 		<Paper>
@@ -57,6 +60,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 							vehicle={vehicle}
 							onRetry={setRetrying}
 							onTransfer={setTransferring}
+							onCancel={setCancelling}
 							onRemove={setRemoving}
 						/>
 					))}
@@ -93,6 +97,18 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 					onClose={() => setTransferring(null)}
 					onSaved={(message) => {
 						setTransferring(null);
+						onSaved(message);
+					}}
+				/>
+			)}
+
+			{cancelling && (
+				<CancelMembershipDialog
+					customer={customer}
+					vehicle={cancelling}
+					onClose={() => setCancelling(null)}
+					onSaved={(message) => {
+						setCancelling(null);
 						onSaved(message);
 					}}
 				/>

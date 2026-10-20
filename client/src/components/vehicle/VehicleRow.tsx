@@ -1,13 +1,21 @@
+import BlockIcon from '@mui/icons-material/Block';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ReplayIcon from '@mui/icons-material/Replay';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import {
 	Box,
+	Divider,
 	IconButton,
+	ListItemIcon,
 	ListItemText,
+	ListSubheader,
 	Menu,
 	MenuItem,
 	Stack,
 	Typography,
 } from '@mui/material';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import PLANS from '../../constants/plans';
 import type { Subscription, Vehicle } from '../../types';
@@ -16,7 +24,7 @@ import { hasLiveMembership } from '../../utils/vehicleForm';
 import PlateBadge from '../PlateBadge';
 import StatusChip from '../StatusChip';
 
-// The one line under the plan that tells a CSR what to do or expect next
+// The one line next to the plan that tells a CSR what to do or expect next
 const membershipDetail = (subscription: Subscription): string => {
 	if (subscription.status === 'overdue') return 'Payment failed, retry needed';
 	if (subscription.status === 'cancelled') {
@@ -34,34 +42,57 @@ const membershipDetail = (subscription: Subscription): string => {
 
 interface ActionItemProps {
 	label: string;
+	icon: ReactNode;
 	// When set, the action is unavailable and this says why (and what to do instead)
 	disabledReason?: string;
+	// Red when available, so actions that end or remove something stand out
+	destructive?: boolean;
 	onClick: () => void;
 }
 
-const ActionItem = ({ label, disabledReason, onClick }: ActionItemProps) => (
-	<MenuItem
-		disabled={!!disabledReason}
-		// MUI fades disabled items to 38%, which makes the reason hard to read;
-		// only the label is greyed out instead
-		sx={{ '&.Mui-disabled': { opacity: 1 } }}
-		onClick={onClick}>
-		<ListItemText
-			primary={label}
-			secondary={disabledReason}
-			slotProps={{
-				primary: {
-					sx: { color: disabledReason ? 'text.disabled' : undefined },
-				},
+const ActionItem = ({
+	label,
+	icon,
+	disabledReason,
+	destructive = false,
+	onClick,
+}: ActionItemProps) => {
+	const color = disabledReason
+		? 'text.disabled'
+		: destructive
+			? 'error.main'
+			: 'text.primary';
+
+	return (
+		<MenuItem
+			disabled={!!disabledReason}
+			// MUI fades disabled items to 38%, which makes the reason hard to read;
+			// only the label and icon are greyed out instead
+			sx={{
+				'&.Mui-disabled': { opacity: 1 },
+				alignItems: 'flex-start',
+				whiteSpace: 'normal',
 			}}
-		/>
-	</MenuItem>
+			onClick={onClick}>
+			<ListItemIcon sx={{ color, mt: 0.25 }}>{icon}</ListItemIcon>
+			<ListItemText
+				primary={label}
+				secondary={disabledReason}
+				slotProps={{ primary: { sx: { color } } }}
+			/>
+		</MenuItem>
+	);
+};
+
+const GroupLabel = ({ children }: { children: string }) => (
+	<ListSubheader sx={{ lineHeight: '32px' }}>{children}</ListSubheader>
 );
 
 interface VehicleRowProps {
 	vehicle: Vehicle;
 	onRetry: (vehicle: Vehicle) => void;
 	onTransfer: (vehicle: Vehicle) => void;
+	onCancel: (vehicle: Vehicle) => void;
 	onRemove: (vehicle: Vehicle) => void;
 }
 
@@ -69,6 +100,7 @@ const VehicleRow = ({
 	vehicle,
 	onRetry,
 	onTransfer,
+	onCancel,
 	onRemove,
 }: VehicleRowProps) => {
 	// The button the menu opens from; null means the menu is closed
@@ -84,37 +116,40 @@ const VehicleRow = ({
 	};
 
 	return (
-		<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 2.5, pr: 1 }}>
-			{/* Details wrap on narrow screens; the menu button stays pinned to the right */}
-			<Box
-				sx={{
-					display: 'flex',
-					flexWrap: 'wrap',
-					alignItems: 'center',
-					gap: 2,
-					flexGrow: 1,
-					py: 2,
-				}}>
-				<PlateBadge plate={vehicle.plate} />
-				<Typography sx={{ flexGrow: 1 }}>
-					{describeVehicle(vehicle) || 'Vehicle details not recorded'}
-				</Typography>
+		<Box
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: 1,
+				pl: 2.5,
+				pr: 1,
+				py: 2,
+			}}>
+			{/* The car on the first line, its membership on the second */}
+			<Stack spacing={1} sx={{ flexGrow: 1, minWidth: 0 }}>
+				<Stack direction='row' spacing={2} sx={{ alignItems: 'center' }}>
+					<PlateBadge plate={vehicle.plate} />
+					<Typography>
+						{describeVehicle(vehicle) || 'Vehicle details not recorded'}
+					</Typography>
+				</Stack>
 
 				{subscription ? (
-					<Box sx={{ textAlign: { sm: 'right' } }}>
-						<Stack
-							direction='row'
-							spacing={1}
-							sx={{ alignItems: 'center', justifyContent: { sm: 'flex-end' } }}>
-							<Typography sx={{ fontWeight: 600 }}>
-								{`${PLANS[subscription.plan].name} ${formatMoney(subscription.price)}/mo`}
-							</Typography>
-							<StatusChip status={subscription.status} />
-						</Stack>
+					<Stack
+						direction='row'
+						sx={{
+							alignItems: 'center',
+							flexWrap: 'wrap',
+							columnGap: 1,
+							rowGap: 0.5,
+						}}>
+						<Typography sx={{ fontWeight: 600 }}>
+							{`${PLANS[subscription.plan].name} ${formatMoney(subscription.price)}/mo`}
+						</Typography>
+						<StatusChip status={subscription.status} />
 						<Typography
 							variant='body2'
 							sx={{
-								mt: 0.5,
 								color:
 									subscription.status === 'overdue'
 										? 'error.main'
@@ -122,38 +157,59 @@ const VehicleRow = ({
 							}}>
 							{membershipDetail(subscription)}
 						</Typography>
-					</Box>
+					</Stack>
 				) : (
 					<Typography sx={{ color: 'text.secondary' }}>
 						No membership
 					</Typography>
 				)}
-			</Box>
+			</Stack>
 
 			<IconButton
 				aria-label={`Actions for ${vehicle.plate}`}
 				onClick={(event) => setMenuAnchor(event.currentTarget)}>
 				<MoreVertIcon />
 			</IconButton>
+
+			{/* Grouped by the kind of call; unavailable actions stay visible with the reason,
+			    so the CSR knows what to do instead */}
 			<Menu
 				anchorEl={menuAnchor}
 				open={menuAnchor !== null}
-				onClose={() => setMenuAnchor(null)}>
-				<ActionItem
-					label='Retry payment'
-					disabledReason={isOverdue ? undefined : 'No overdue payment'}
-					onClick={runAction(onRetry)}
-				/>
-				{/* Unavailable actions stay visible with the reason, so the CSR knows what to do instead */}
+				onClose={() => setMenuAnchor(null)}
+				slotProps={{ paper: { sx: { width: 320 } } }}>
+				<GroupLabel>Membership</GroupLabel>
 				<ActionItem
 					label='Transfer membership'
+					icon={<SwapHorizIcon fontSize='small' />}
 					disabledReason={
 						isLive ? undefined : 'No active membership to transfer'
 					}
 					onClick={runAction(onTransfer)}
 				/>
 				<ActionItem
+					label='Cancel membership'
+					icon={<BlockIcon fontSize='small' />}
+					destructive
+					disabledReason={isLive ? undefined : 'No active membership to cancel'}
+					onClick={runAction(onCancel)}
+				/>
+
+				<Divider />
+				<GroupLabel>Payment</GroupLabel>
+				<ActionItem
+					label='Retry payment'
+					icon={<ReplayIcon fontSize='small' />}
+					disabledReason={isOverdue ? undefined : 'No overdue payment'}
+					onClick={runAction(onRetry)}
+				/>
+
+				<Divider />
+				<GroupLabel>Vehicle</GroupLabel>
+				<ActionItem
 					label='Remove vehicle'
+					icon={<DeleteOutlineIcon fontSize='small' />}
+					destructive
 					disabledReason={
 						isLive ? 'Cancel or transfer the membership first' : undefined
 					}

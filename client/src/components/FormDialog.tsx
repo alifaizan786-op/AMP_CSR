@@ -15,6 +15,8 @@ interface FormDialogProps {
 	submitLabel?: string;
 	// 'error' makes the button red for destructive actions like removing a vehicle
 	submitColor?: 'primary' | 'error';
+	// Renamed where "Cancel" would be confusing, e.g. next to "Cancel membership"
+	cancelLabel?: string;
 	saving: boolean;
 	serverError: string;
 	canSubmit: boolean;
@@ -29,6 +31,7 @@ const FormDialog = ({
 	title,
 	submitLabel = 'Save',
 	submitColor = 'primary',
+	cancelLabel = 'Cancel',
 	saving,
 	serverError,
 	canSubmit,
@@ -55,7 +58,7 @@ const FormDialog = ({
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2 }}>
 					<Button onClick={onClose} disabled={saving}>
-						Cancel
+						{cancelLabel}
 					</Button>
 					<Button
 						type='submit'

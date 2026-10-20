@@ -48,3 +48,15 @@ export const retryPayment = (customerId: string, vehicleId: string) =>
 		`/customers/${customerId}/vehicles/${vehicleId}/subscription/retry-payment`,
 		{ method: 'POST' },
 	);
+
+// Cancels immediately: billing stops and no further charges are made.
+// The server requires a reason (200 characters max) and keeps it on the membership.
+export const cancelMembership = (
+	customerId: string,
+	vehicleId: string,
+	reason: string,
+) =>
+	request<Customer>(
+		`/customers/${customerId}/vehicles/${vehicleId}/subscription/cancel`,
+		{ method: 'POST', body: JSON.stringify({ reason }) },
+	);
