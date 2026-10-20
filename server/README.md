@@ -205,6 +205,16 @@ Returns the updated customer.
 
 Returns `201` with the new activity entry. Notes are trimmed and limited to 1,000 characters.
 
+### Cancel an account
+
+`POST /api/customers/:id/cancel`
+
+```json
+{ "reason": "Moving out of state" }
+```
+
+Cancels every active and overdue membership on the account in one save, with the same rules as cancelling a single membership: a reason is required (max 200 characters), cancellation is immediate, and billing stops. The account, vehicles, and history stay, so the customer can rejoin later. Failed charges stay in purchase history. Returns `409` if there are no active or overdue memberships.
+
 ## Vehicles and memberships
 
 All routes below are under `/api/customers/:id/vehicles`. Every successful request returns the **full updated customer**, so the UI can replace its copy in one step. Every change is recorded in the activity log.

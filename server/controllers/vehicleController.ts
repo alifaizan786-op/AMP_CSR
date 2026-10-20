@@ -7,9 +7,11 @@ import formatMoney from '../utils/formatMoney';
 import HttpError from '../utils/HttpError';
 import logActivity from '../utils/logActivity';
 import PLANS, { isPlanKey } from '../utils/plans';
+import readCancelReason from '../utils/readCancelReason';
 import {
 	chargeMembership,
 	describeVehicle,
+	endSubscription,
 	hasLiveSubscription,
 	planName,
 	pushVehicle,
@@ -18,8 +20,6 @@ import {
 } from '../utils/vehicleHelpers';
 
 type VehicleParams = { id: string; vehicleId: string };
-
-const MAX_REASON_LENGTH = 200;
 
 // POST /api/customers/:id/vehicles
 export const addVehicle = async (
@@ -169,15 +169,7 @@ export const cancelSubscription = async (
 	req: Request<VehicleParams>,
 	res: Response,
 ) => {
-	const reason =
-		typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
-	if (!reason) throw new HttpError(400, 'A cancellation reason is required');
-	if (reason.length > MAX_REASON_LENGTH) {
-		throw new HttpError(
-			400,
-			`Reason must be ${MAX_REASON_LENGTH} characters or less`,
-		);
-	}
+	const reason = readCancelReason(req.body);
 
 	const customer = await findCustomer(req.params.id);
 	const vehicle = findVehicle(customer, req.params.vehicleId);
@@ -191,10 +183,7 @@ export const cancelSubscription = async (
 	}
 
 	// Cancels immediately; billing stops and no further charges are made
-	subscription.status = 'cancelled';
-	subscription.cancelledAt = new Date();
-	subscription.cancelReason = reason;
-	subscription.nextBillingDate = undefined;
+	endSubscription(vehicle, reason);
 
 	await customer.save();
 	await logActivity(

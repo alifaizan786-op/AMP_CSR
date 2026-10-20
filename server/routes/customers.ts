@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
 	addNote,
+	cancelAccount,
 	getCustomerById,
 	getCustomers,
 	updateCustomer,
@@ -20,6 +21,9 @@ router.patch('/:id', updateCustomer);
 
 // POST /api/customers/:id/notes
 router.post('/:id/notes', addNote);
+
+// POST /api/customers/:id/cancel
+router.post('/:id/cancel', cancelAccount);
 
 // Vehicle and subscription routes,
 // under /api/customers/:id/vehicles

@@ -10,6 +10,12 @@ import findCustomer from '../utils/findCustomer';
 import HttpError from '../utils/HttpError';
 import logActivity from '../utils/logActivity';
 import parsePositiveInt from '../utils/parsePositiveInt';
+import readCancelReason from '../utils/readCancelReason';
+import {
+	endSubscription,
+	hasLiveSubscription,
+	planName,
+} from '../utils/vehicleHelpers';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -159,4 +165,42 @@ export const addNote = async (req: Request<{ id: string }>, res: Response) => {
 	const note = await logActivity(customer._id, message, 'note');
 
 	res.status(201).json(note);
+};
+
+// POST /api/customers/:id/cancel
+// "Cancel my account": ends every live membership in one save, so it can't half-succeed.
+// The account, vehicles, and history stay, so the customer can rejoin later.
+export const cancelAccount = async (
+	req: Request<{ id: string }>,
+	res: Response,
+) => {
+	const reason = readCancelReason(req.body);
+	const customer = await findCustomer(req.params.id);
+
+	const cancelled: string[] = [];
+	const now = new Date();
+	for (let i = 0; i < customer.vehicles.length; i++) {
+		const vehicle = customer.vehicles[i];
+		if (!hasLiveSubscription(vehicle)) continue;
+
+		endSubscription(vehicle, reason, now);
+		cancelled.push(
+			`${planName(vehicle.subscription!.plan)} on ${vehicle.plate}`,
+		);
+	}
+
+	if (!cancelled.length) {
+		throw new HttpError(
+			409,
+			'This account has no active memberships to cancel',
+		);
+	}
+
+	await customer.save();
+	await logActivity(
+		customer._id,
+		`Cancelled account: ${cancelled.join(', ')}. Reason: ${reason}`,
+	);
+
+	res.json(customer);
 };
