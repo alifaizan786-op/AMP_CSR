@@ -46,13 +46,16 @@ const PlanCards = ({
 						flex: 1,
 						borderWidth: 2,
 						borderColor: isSelected ? 'primary.main' : 'divider',
+						// The current plan is shaded, so it reads as unavailable rather than selectable
+						bgcolor: isCurrent ? 'action.hover' : 'background.paper',
 					}}>
 					<CardActionArea
 						role='radio'
 						aria-checked={isSelected}
 						disabled={disabled || isCurrent}
 						onClick={() => onChange(key)}
-						// Buttons center their content; pin it to the top so the cards line up
+						// Buttons center their content; pin it to the top so the cards line up.
+						// Keyboard focus shows as an outline, not the default grey fill that looks disabled.
 						sx={{
 							height: '100%',
 							p: 2,
@@ -60,6 +63,14 @@ const PlanCards = ({
 							flexDirection: 'column',
 							justifyContent: 'flex-start',
 							alignItems: 'stretch',
+							'&.Mui-focusVisible': {
+								outline: '2px solid',
+								outlineColor: 'primary.main',
+								outlineOffset: -4,
+							},
+							'&.Mui-focusVisible .MuiCardActionArea-focusHighlight': {
+								opacity: 0,
+							},
 						}}>
 						<Stack spacing={1}>
 							<Stack

@@ -1,5 +1,6 @@
 import { Typography } from '@mui/material';
 import { useState } from 'react';
+import { describeWriteError } from '../../api/client';
 import { retryPayment } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
 import type { Customer, Vehicle } from '../../types';
@@ -12,6 +13,8 @@ interface RetryPaymentDialogProps {
 	vehicle: Vehicle;
 	onClose: () => void;
 	onSaved: (message: string) => void;
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale: () => void;
 }
 
 // Confirm before charging, and say what happens if it goes through
@@ -20,6 +23,7 @@ const RetryPaymentDialog = ({
 	vehicle,
 	onClose,
 	onSaved,
+	onStale,
 }: RetryPaymentDialogProps) => {
 	const [serverError, setServerError] = useState('');
 	const [saving, setSaving] = useState(false);
@@ -36,7 +40,9 @@ const RetryPaymentDialog = ({
 			onSaved(`${amount} charged for ${vehicle.plate}. Membership is active`);
 		} catch (err) {
 			// e.g. 409 if someone else already resolved it
-			setServerError((err as Error).message);
+			const { message, stale } = describeWriteError(err);
+			setServerError(message);
+			if (stale) onStale();
 			setSaving(false);
 		}
 	};

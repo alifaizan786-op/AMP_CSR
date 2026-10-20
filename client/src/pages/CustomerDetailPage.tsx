@@ -164,7 +164,12 @@ const CustomerDetailPage = () => {
 				</Grid>
 				<Grid size={{ xs: 12, md: 8 }}>
 					<Stack spacing={3}>
-						<VehiclesCard customer={customer} onSaved={handleSaved} />
+						<VehiclesCard
+							customer={customer}
+							onSaved={handleSaved}
+							// A failed save may mean the data changed elsewhere: reload it quietly, no toast
+							onStale={() => setReloadCount((count) => count + 1)}
+						/>
 						<PurchaseTable purchases={data.purchases} />
 					</Stack>
 				</Grid>

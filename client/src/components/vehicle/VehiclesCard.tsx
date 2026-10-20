@@ -14,10 +14,11 @@ import VehicleRow from './VehicleRow';
 interface VehiclesCardProps {
 	customer: Customer;
 	onSaved: (message: string) => void;
+	onStale: () => void;
 }
 
 // Each car and its membership; vehicle actions start here
-const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
+const VehiclesCard = ({ customer, onSaved, onStale }: VehiclesCardProps) => {
 	const [adding, setAdding] = useState(false);
 	// The vehicle being confirmed for removal; null when no confirm dialog is open
 	const [removing, setRemoving] = useState<Vehicle | null>(null);
@@ -95,6 +96,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						setStarting(null);
 						onSaved(message);
 					}}
+					onStale={onStale}
 				/>
 			)}
 
@@ -107,6 +109,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						setChanging(null);
 						onSaved(message);
 					}}
+					onStale={onStale}
 				/>
 			)}
 
@@ -119,6 +122,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						setRetrying(null);
 						onSaved(message);
 					}}
+					onStale={onStale}
 				/>
 			)}
 
@@ -131,6 +135,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						setTransferring(null);
 						onSaved(message);
 					}}
+					onStale={onStale}
 				/>
 			)}
 
@@ -143,6 +148,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						setCancelling(null);
 						onSaved(message);
 					}}
+					onStale={onStale}
 				/>
 			)}
 
@@ -155,6 +161,7 @@ const VehiclesCard = ({ customer, onSaved }: VehiclesCardProps) => {
 						setRemoving(null);
 						onSaved(message);
 					}}
+					onStale={onStale}
 				/>
 			)}
 		</Paper>

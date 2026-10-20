@@ -69,9 +69,11 @@ const ActionItem = ({
 		<MenuItem
 			disabled={!!disabledReason}
 			// MUI fades disabled items to 38%, which makes the reason hard to read;
-			// only the label and icon are greyed out instead
+			// only the label and icon are greyed out instead. Disabled items can be
+			// focused from the keyboard, so they also need a visible focus state.
 			sx={{
 				'&.Mui-disabled': { opacity: 1 },
+				'&.Mui-disabled:focus': { bgcolor: 'action.focus' },
 				alignItems: 'flex-start',
 				whiteSpace: 'normal',
 			}}
@@ -149,7 +151,13 @@ const VehicleRow = ({
 							columnGap: 1,
 							rowGap: 0.5,
 						}}>
-						<Typography sx={{ fontWeight: 600 }}>
+						{/* Greyed when cancelled, so the price doesn't read as still billing */}
+						<Typography
+							sx={
+								subscription.status === 'cancelled'
+									? { color: 'text.secondary' }
+									: { fontWeight: 600 }
+							}>
 							{`${PLANS[subscription.plan].name} ${formatMoney(subscription.price)}/mo`}
 						</Typography>
 						<StatusChip status={subscription.status} />
@@ -183,13 +191,22 @@ const VehicleRow = ({
 				anchorEl={menuAnchor}
 				open={menuAnchor !== null}
 				onClose={() => setMenuAnchor(null)}
-				slotProps={{ paper: { sx: { width: 320 } } }}>
+				// disabledItemsFocusable: arrow keys still reach unavailable items,
+				// so keyboard and screen reader users hear the reason too
+				slotProps={{
+					paper: { sx: { width: 320 } },
+					list: { disabledItemsFocusable: true },
+				}}>
 				<GroupLabel>Membership</GroupLabel>
 				<ActionItem
 					label='Start membership'
 					icon={<AddCircleOutlineIcon fontSize='small' />}
 					disabledReason={
-						isLive ? 'Already has a membership. Use Change plan' : undefined
+						isOverdue
+							? 'Already has a membership. Retry the payment first'
+							: isLive
+								? 'Already has a membership. Use Change plan'
+								: undefined
 					}
 					onClick={runAction(onStart)}
 				/>

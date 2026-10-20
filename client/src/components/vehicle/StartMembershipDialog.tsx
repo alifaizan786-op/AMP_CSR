@@ -1,5 +1,6 @@
 import { Alert, Typography } from '@mui/material';
 import { useState } from 'react';
+import { describeWriteError } from '../../api/client';
 import { startMembership } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
 import type { Customer, PlanKey, Vehicle } from '../../types';
@@ -13,6 +14,8 @@ interface StartMembershipDialogProps {
 	vehicle: Vehicle;
 	onClose: () => void;
 	onSaved: (message: string) => void;
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale: () => void;
 }
 
 // The server bills the first month right away, so the amount is on the button itself
@@ -21,6 +24,8 @@ const StartMembershipDialog = ({
 	vehicle,
 	onClose,
 	onSaved,
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale,
 }: StartMembershipDialogProps) => {
 	const [plan, setPlan] = useState<PlanKey | ''>('');
 	const [serverError, setServerError] = useState('');
@@ -45,7 +50,9 @@ const StartMembershipDialog = ({
 			);
 		} catch (err) {
 			// e.g. 409 if someone else started one in the meantime
-			setServerError((err as Error).message);
+			const { message, stale } = describeWriteError(err);
+			setServerError(message);
+			if (stale) onStale();
 			setSaving(false);
 		}
 	};

@@ -1,5 +1,6 @@
 import { Alert, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
+import { describeWriteError } from '../../api/client';
 import { cancelMembership } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
 import type { Customer, Vehicle } from '../../types';
@@ -15,6 +16,8 @@ interface CancelMembershipDialogProps {
 	vehicle: Vehicle;
 	onClose: () => void;
 	onSaved: (message: string) => void;
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale: () => void;
 }
 
 // Confirm, say exactly what happens, and record why the customer is leaving
@@ -23,6 +26,7 @@ const CancelMembershipDialog = ({
 	vehicle,
 	onClose,
 	onSaved,
+	onStale,
 }: CancelMembershipDialogProps) => {
 	const [reason, setReason] = useState('');
 	const [serverError, setServerError] = useState('');
@@ -36,11 +40,23 @@ const CancelMembershipDialog = ({
 		setSaving(true);
 		setServerError('');
 		try {
-			await cancelMembership(customer._id, vehicle._id, reason.trim());
-			onSaved(`${planName} membership on ${vehicle.plate} cancelled`);
+			const updated = await cancelMembership(
+				customer._id,
+				vehicle._id,
+				reason.trim(),
+			);
+			// Name the plan the server actually cancelled; it may have changed in another tab
+			const cancelledPlan =
+				updated.vehicles.find((other) => other._id === vehicle._id)
+					?.subscription?.plan ?? subscription.plan;
+			onSaved(
+				`${PLANS[cancelledPlan].name} membership on ${vehicle.plate} cancelled`,
+			);
 		} catch (err) {
 			// e.g. 409 if someone else already cancelled or transferred it
-			setServerError((err as Error).message);
+			const { message, stale } = describeWriteError(err);
+			setServerError(message);
+			if (stale) onStale();
 			setSaving(false);
 		}
 	};

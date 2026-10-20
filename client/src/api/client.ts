@@ -35,3 +35,17 @@ export const request = async <T>(
 
 	return data as T;
 };
+
+// A 409 or 404 on a write usually means the data changed after the page loaded
+// (another tab or CSR got there first), so the page should reload what it shows
+export const describeWriteError = (err: unknown) => {
+	const message = err instanceof Error ? err.message : 'Something went wrong';
+	const stale =
+		err instanceof ApiError && (err.status === 409 || err.status === 404);
+	return {
+		stale,
+		message: stale
+			? `${message}. The page now shows the latest data.`
+			: message,
+	};
+};

@@ -9,6 +9,7 @@ import {
 	TextField,
 } from '@mui/material';
 import { useState } from 'react';
+import { describeWriteError } from '../../api/client';
 import type { TransferTarget } from '../../api/vehicles';
 import { transferMembership } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
@@ -31,6 +32,8 @@ interface TransferDialogProps {
 	vehicle: Vehicle;
 	onClose: () => void;
 	onSaved: (message: string) => void;
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale: () => void;
 }
 
 const TransferDialog = ({
@@ -38,6 +41,7 @@ const TransferDialog = ({
 	vehicle,
 	onClose,
 	onSaved,
+	onStale,
 }: TransferDialogProps) => {
 	// Only cars without a live membership can receive one (the server returns 409 otherwise)
 	const eligible = customer.vehicles.filter(
@@ -75,7 +79,9 @@ const TransferDialog = ({
 			onSaved(`${planName} membership moved to ${targetPlate}`);
 		} catch (err) {
 			// e.g. 409 if the new plate is already on this account
-			setServerError((err as Error).message);
+			const { message, stale } = describeWriteError(err);
+			setServerError(message);
+			if (stale) onStale();
 			setSaving(false);
 		}
 	};

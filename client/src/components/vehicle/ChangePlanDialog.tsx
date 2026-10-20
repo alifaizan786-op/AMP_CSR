@@ -1,5 +1,6 @@
 import { Typography } from '@mui/material';
 import { useState } from 'react';
+import { describeWriteError } from '../../api/client';
 import { changePlan } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
 import type { Customer, PlanKey, Vehicle } from '../../types';
@@ -13,6 +14,8 @@ interface ChangePlanDialogProps {
 	vehicle: Vehicle;
 	onClose: () => void;
 	onSaved: (message: string) => void;
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale: () => void;
 }
 
 // No charge today: the server applies the new price from the next billing date, without proration
@@ -21,6 +24,7 @@ const ChangePlanDialog = ({
 	vehicle,
 	onClose,
 	onSaved,
+	onStale,
 }: ChangePlanDialogProps) => {
 	const [plan, setPlan] = useState<PlanKey | ''>('');
 	const [serverError, setServerError] = useState('');
@@ -45,7 +49,9 @@ const ChangePlanDialog = ({
 			);
 		} catch (err) {
 			// e.g. 409 if the payment failed since the page loaded
-			setServerError((err as Error).message);
+			const { message, stale } = describeWriteError(err);
+			setServerError(message);
+			if (stale) onStale();
 			setSaving(false);
 		}
 	};
