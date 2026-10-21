@@ -1,5 +1,6 @@
 import { TextField } from '@mui/material';
 import { useState } from 'react';
+import { describeWriteError } from '../../api/client';
 import { updateCustomer } from '../../api/customers';
 import type { AccountFields, Customer } from '../../types';
 import type { AccountErrors, AccountField } from '../../utils/accountForm';
@@ -27,6 +28,8 @@ interface EditAccountDialogProps {
 	customer: Customer;
 	onClose: () => void;
 	onSaved: () => void;
+	// Reloads the customer when the save failed because the data changed elsewhere
+	onStale: () => void;
 }
 
 // Mounted only while open, so the form starts from the current values every time
@@ -34,6 +37,7 @@ const EditAccountDialog = ({
 	customer,
 	onClose,
 	onSaved,
+	onStale,
 }: EditAccountDialogProps) => {
 	const [form, setForm] = useState<AccountFields>({
 		firstName: customer.firstName,
@@ -71,8 +75,11 @@ const EditAccountDialog = ({
 			await updateCustomer(customer._id, changes);
 			onSaved();
 		} catch (err) {
-			// e.g. 409 "email already in use"; keep the dialog open so nothing typed is lost
+			// Keep the dialog open so nothing typed is lost. A 409 here is either "email already
+			// in use" or "changed by someone else", and the server's own message fits both, so it's
+			// shown as is; the quiet reload only matters for the second.
 			setServerError((err as Error).message);
+			if (describeWriteError(err).stale) onStale();
 			setSaving(false);
 		}
 	};

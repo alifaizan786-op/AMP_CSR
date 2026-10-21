@@ -1,7 +1,3 @@
-// Empty in development (Vite proxies /api);
-// set to the deployed API's URL in production
-const API_URL = import.meta.env.VITE_API_URL ?? '';
-
 // Carries the HTTP status so pages can react differently,
 // e.g. show "not found" on a 404
 export class ApiError extends Error {
@@ -18,7 +14,8 @@ export const request = async <T>(
 	path: string,
 	options: RequestInit = {},
 ): Promise<T> => {
-	const response = await fetch(`${API_URL}/api${path}`, {
+	// Always same-origin: Vite proxies /api in development, and Express serves the app in production
+	const response = await fetch(`/api${path}`, {
 		...options,
 		headers: { 'Content-Type': 'application/json', ...options.headers },
 	});

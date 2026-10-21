@@ -93,6 +93,7 @@ const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 						setEditing(false);
 						onSaved('Account updated');
 					}}
+					onStale={onStale}
 				/>
 			)}
 
