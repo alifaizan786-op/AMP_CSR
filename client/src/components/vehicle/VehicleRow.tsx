@@ -73,7 +73,7 @@ const ActionItem = ({
 			// focused from the keyboard, so they also need a visible focus state.
 			sx={{
 				'&.Mui-disabled': { opacity: 1 },
-				'&.Mui-disabled:focus': { bgcolor: 'action.focus' },
+								'&.Mui-disabled:focus-visible': { bgcolor: 'action.focus' },
 				alignItems: 'flex-start',
 				whiteSpace: 'normal',
 			}}
