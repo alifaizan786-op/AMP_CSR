@@ -67,6 +67,8 @@ export interface Purchase {
 	amount: number; // cents
 	status: 'paid' | 'failed' | 'refunded';
 	failureReason?: string;
+	refundReason?: string;
+	refundedAt?: string;
 	createdAt: string;
 }
 

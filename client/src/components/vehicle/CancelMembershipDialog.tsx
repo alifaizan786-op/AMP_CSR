@@ -5,7 +5,6 @@ import { cancelMembership } from '../../api/vehicles';
 import PLANS from '../../constants/plans';
 import type { Customer, Vehicle } from '../../types';
 import { formatMoney } from '../../utils/format';
-import CancelReasonField from '../CancelReasonField';
 import FormDialog from '../FormDialog';
 
 interface CancelMembershipDialogProps {
@@ -83,10 +82,11 @@ const CancelMembershipDialog = ({
 				</Alert>
 			)}
 
-			<CancelReasonField
+			<ReasonField
 				value={reason}
 				onChange={setReason}
 				disabled={saving}
+				placeholder='e.g. Moving out of the area'
 			/>
 		</FormDialog>
 	);

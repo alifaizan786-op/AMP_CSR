@@ -1,23 +1,25 @@
 import { TextField } from '@mui/material';
 
-// Matches the server's limit for both membership and account cancellations
+// Matches the server's limit for every reason (cancellations and refunds)
 const MAX_REASON_LENGTH = 200;
 
-interface CancelReasonFieldProps {
+interface ReasonFieldProps {
 	value: string;
 	onChange: (value: string) => void;
 	disabled: boolean;
+	placeholder: string;
 }
 
-// Why the customer is leaving; required by the server and kept on the cancelled membership
-const CancelReasonField = ({
+// Why the CSR is cancelling or refunding; required by the server and kept with the record
+const ReasonField = ({
 	value,
 	onChange,
 	disabled,
-}: CancelReasonFieldProps) => (
+	placeholder,
+}: ReasonFieldProps) => (
 	<TextField
 		label='Reason'
-		placeholder='e.g. Moving out of the area'
+		placeholder={placeholder}
 		value={value}
 		onChange={(event) => onChange(event.target.value)}
 		autoFocus
@@ -29,4 +31,4 @@ const CancelReasonField = ({
 	/>
 );
 
-export default CancelReasonField;
+export default ReasonField;

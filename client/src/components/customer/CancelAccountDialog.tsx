@@ -6,7 +6,6 @@ import PLANS from '../../constants/plans';
 import type { Customer } from '../../types';
 import { formatMoney, fullName } from '../../utils/format';
 import { hasLiveMembership } from '../../utils/vehicleForm';
-import CancelReasonField from '../CancelReasonField';
 import FormDialog from '../FormDialog';
 import StatusChip from '../StatusChip';
 
@@ -134,10 +133,11 @@ const CancelAccountDialog = ({
 				</Alert>
 			)}
 
-			<CancelReasonField
+			<ReasonField
 				value={reason}
 				onChange={setReason}
 				disabled={saving}
+				placeholder='e.g. Moving out of the area'
 			/>
 		</FormDialog>
 	);

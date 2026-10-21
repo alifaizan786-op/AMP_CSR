@@ -13,6 +13,7 @@ import {
 import { useState } from 'react';
 import type { Purchase } from '../../types';
 import { formatDate, formatMoney } from '../../utils/format';
+import RefundPurchaseDialog from '../purchase/RefundPurchaseDialog';
 
 // Keeps long histories from pushing the rest of the page down; the CSR can expand on demand
 const INITIAL_ROWS = 10;
@@ -27,8 +28,22 @@ const STATUS_STYLES: Record<
 	refunded: { label: 'Refunded', color: 'text.secondary', fontWeight: 400 },
 };
 
-const PurchaseTable = ({ purchases }: { purchases: Purchase[] }) => {
+interface PurchaseTableProps {
+	customerId: string;
+	purchases: Purchase[];
+	onSaved: (message: string) => void;
+	onStale: () => void;
+}
+
+const PurchaseTable = ({
+	customerId,
+	purchases,
+	onSaved,
+	onStale,
+}: PurchaseTableProps) => {
 	const [showAll, setShowAll] = useState(false);
+	// The purchase being refunded; null when no dialog is open
+	const [refunding, setRefunding] = useState<Purchase | null>(null);
 	const visible = showAll ? purchases : purchases.slice(0, INITIAL_ROWS);
 
 	return (
@@ -44,7 +59,7 @@ const PurchaseTable = ({ purchases }: { purchases: Purchase[] }) => {
 			) : (
 				// Scrolls sideways inside the card on narrow screens instead of widening the page
 				<TableContainer>
-					<Table size='small' sx={{ minWidth: 600 }}>
+					<Table size='small' sx={{ minWidth: 680 }}>
 						<TableHead>
 							<TableRow>
 								<TableCell>Date</TableCell>
@@ -52,6 +67,8 @@ const PurchaseTable = ({ purchases }: { purchases: Purchase[] }) => {
 								<TableCell>Plate</TableCell>
 								<TableCell align='right'>Amount</TableCell>
 								<TableCell>Status</TableCell>
+								{/* Refund lives on the row it applies to; only paid charges can be refunded */}
+								<TableCell aria-label='Actions' />
 							</TableRow>
 						</TableHead>
 						<TableBody>
@@ -82,6 +99,16 @@ const PurchaseTable = ({ purchases }: { purchases: Purchase[] }) => {
 													{purchase.failureReason}
 												</Typography>
 											)}
+											{purchase.refundReason && (
+												<Typography
+													variant='body2'
+													sx={{ color: 'text.secondary' }}>
+													{purchase.refundedAt
+														? `Refunded ${formatDate(purchase.refundedAt)}: `
+														: 'Refunded: '}
+													{purchase.refundReason}
+												</Typography>
+											)}
 										</TableCell>
 										<TableCell sx={{ fontWeight: 600 }}>
 											{purchase.vehiclePlate}
@@ -95,6 +122,15 @@ const PurchaseTable = ({ purchases }: { purchases: Purchase[] }) => {
 												fontWeight: status.fontWeight,
 											}}>
 											{status.label}
+										</TableCell>
+										<TableCell align='right'>
+											{purchase.status === 'paid' && (
+												<Button
+													size='small'
+													onClick={() => setRefunding(purchase)}>
+													Refund
+												</Button>
+											)}
 										</TableCell>
 									</TableRow>
 								);
@@ -110,6 +146,19 @@ const PurchaseTable = ({ purchases }: { purchases: Purchase[] }) => {
 						{showAll ? 'Show fewer' : `Show all ${purchases.length}`}
 					</Button>
 				</Box>
+			)}
+
+			{refunding && (
+				<RefundPurchaseDialog
+					customerId={customerId}
+					purchase={refunding}
+					onClose={() => setRefunding(null)}
+					onSaved={(message) => {
+						setRefunding(null);
+						onSaved(message);
+					}}
+					onStale={onStale}
+				/>
 			)}
 		</Paper>
 	);

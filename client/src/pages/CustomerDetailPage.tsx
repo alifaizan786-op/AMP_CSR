@@ -17,7 +17,7 @@ import { getCustomer } from '../api/customers';
 import AccountCard from '../components/customer/AccountCard';
 import ActivityList from '../components/customer/ActivityList';
 import OverdueBanner from '../components/customer/OverdueBanner';
-import PurchaseTable from '../components/customer/PurchaseTable';
+import PurchaseTable from '../components/purchase/PurchaseTable';
 import StatusChip from '../components/StatusChip';
 import VehiclesCard from '../components/vehicle/VehiclesCard';
 import type { CustomerDetailResponse } from '../types';
@@ -174,7 +174,12 @@ const CustomerDetailPage = () => {
 							// A failed save may mean the data changed elsewhere: reload it quietly, no toast
 							onStale={() => setReloadCount((count) => count + 1)}
 						/>
-						<PurchaseTable purchases={data.purchases} />
+						<PurchaseTable
+							customerId={customer._id}
+							purchases={data.purchases}
+							onSaved={handleSaved}
+							onStale={() => setReloadCount((count) => count + 1)}
+						/>
 					</Stack>
 				</Grid>
 			</Grid>
