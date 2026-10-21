@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { VehicleDocument } from '../models';
 import addMonths from '../utils/addMonths';
 import assertVersion from '../utils/assertVersion';
+import isCardExpired from '../utils/cardExpiry';
 import findCustomer from '../utils/findCustomer';
 import findVehicle from '../utils/findVehicle';
 import formatMoney from '../utils/formatMoney';
@@ -324,6 +325,15 @@ export const retryPayment = async (
 
 	if (!subscription || subscription.status !== 'overdue') {
 		throw new HttpError(409, `${vehicle.plate} has no overdue payment`);
+	}
+
+	// Charging an expired card would only fail again; the customer needs to update it first
+	const card = customer.paymentMethod;
+	if (card && isCardExpired(card)) {
+		throw new HttpError(
+			409,
+			`The card on file expired ${String(card.expMonth).padStart(2, '0')}/${card.expYear}. Send the customer a card update link`,
+		);
 	}
 
 	// The failed charge stays in history; a new successful charge is added alongside it

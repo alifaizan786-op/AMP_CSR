@@ -4,6 +4,7 @@ import {
 	cancelAccount,
 	getCustomerById,
 	getCustomers,
+	sendPaymentLink,
 	updateCustomer,
 } from '../controllers/customerController';
 import purchaseRoutes from './purchases';
@@ -25,6 +26,9 @@ router.post('/:id/notes', addNote);
 
 // POST /api/customers/:id/cancel
 router.post('/:id/cancel', cancelAccount);
+
+// POST /api/customers/:id/payment-link
+router.post('/:id/payment-link', sendPaymentLink);
 
 // Purchase routes, under /api/customers/:id/purchases
 router.use('/:id/purchases', purchaseRoutes);

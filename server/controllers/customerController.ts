@@ -31,6 +31,21 @@ const FIELD_LABELS: Record<(typeof EDITABLE_FIELDS)[number], string> = {
 	phone: 'Phone',
 };
 
+// POST /api/customers/:id/payment-link
+// Emails the customer a secure link to update their card. Sending is simulated;
+// in production this would call the payment processor's hosted update page.
+export const sendPaymentLink = async (
+	req: Request<{ id: string }>,
+	res: Response,
+) => {
+	const customer = await findCustomer(req.params.id);
+	await logActivity(
+		customer._id,
+		`Sent a card update link to ${customer.email}`,
+	);
+	res.json({ sentTo: customer.email });
+};
+
 // GET /api/customers?search=&status=&page=&limit=
 export const getCustomers = async (req: Request, res: Response) => {
 	const search = typeof req.query.search === 'string' ? req.query.search : '';

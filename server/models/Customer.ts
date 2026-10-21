@@ -20,6 +20,23 @@ const subscriptionSchema = new Schema(
 	{ _id: false },
 );
 
+// Display details only, as a payment processor would return them. The full card number
+// never reaches this app, which keeps it out of PCI scope; customers change cards
+// through the update link, not by reading numbers to a CSR.
+const paymentMethodSchema = new Schema(
+	{
+		brand: {
+			type: String,
+			enum: ['Visa', 'Mastercard', 'Amex', 'Discover'],
+			required: true,
+		},
+		last4: { type: String, required: true, match: /^\d{4}$/ },
+		expMonth: { type: Number, required: true, min: 1, max: 12 },
+		expYear: { type: Number, required: true },
+	},
+	{ _id: false },
+);
+
 const vehicleSchema = new Schema({
 	plate: {
 		type: String,
@@ -93,6 +110,7 @@ const customerSchema = new Schema(
 			default: 'inactive',
 		},
 		vehicles: [vehicleSchema],
+		paymentMethod: { type: paymentMethodSchema, default: undefined },
 	},
 	// optimisticConcurrency: save() fails if someone else saved this customer since it was loaded,
 	// so two simultaneous requests (e.g. a double "retry payment") can't both go through

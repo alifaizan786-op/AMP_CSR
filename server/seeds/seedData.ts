@@ -37,6 +37,8 @@ interface SeedCustomer {
 	vehicles: SeedVehicle[];
 	note?: string;
 	singleWashes?: number;
+	// Overdue cars' last charge failed for this reason; random when not set
+	failureReason?: string;
 }
 
 interface SeedPurchase {
@@ -79,6 +81,9 @@ const CANCEL_REASONS = [
 	'Sold vehicle',
 ];
 const FAILURE_REASONS = ['Card declined', 'Card expired', 'Insufficient funds'];
+
+const CARD_BRANDS = ['Visa', 'Mastercard', 'Amex', 'Discover'] as const;
+
 // Curated pairs, since faker picks makes and models independently (e.g. "Ford Camry")
 const VEHICLES: [string, string][] = [
 	['Toyota', 'Camry'],
@@ -125,6 +130,19 @@ const randomVehicle = (): SeedVehicle => {
 	};
 };
 
+// A card that expired in the last few months, or one that's valid for a few more years
+const buildCard = (expired: boolean) => {
+	const expiry = expired
+		? monthsAgo(faker.number.int({ min: 1, max: 6 }))
+		: monthsAgo(-faker.number.int({ min: 3, max: 48 }));
+	return {
+		brand: faker.helpers.arrayElement(CARD_BRANDS),
+		last4: faker.string.numeric(4),
+		expMonth: expiry.getUTCMonth() + 1,
+		expYear: expiry.getUTCFullYear(),
+	};
+};
+
 const buildSubscription = (
 	status: SubscriptionStatus,
 	startedMonthsAgo: number,
@@ -158,6 +176,7 @@ const buildSubscription = (
 const buildMembershipPurchases = (
 	customer: CustomerDocument,
 	vehicle: VehicleDocument,
+	failureReason?: string,
 ): SeedPurchase[] => {
 	const subscription = vehicle.subscription;
 	if (!subscription) return [];
@@ -186,7 +205,8 @@ const buildMembershipPurchases = (
 	if (subscription.status === 'overdue' && purchases.length) {
 		const latest = purchases[purchases.length - 1];
 		latest.status = 'failed';
-		latest.failureReason = faker.helpers.arrayElement(FAILURE_REASONS);
+		latest.failureReason =
+			failureReason || faker.helpers.arrayElement(FAILURE_REASONS);
 	}
 	return purchases;
 };
@@ -232,6 +252,8 @@ const demoCustomers = (): SeedCustomer[] => [
 			},
 		],
 		note: 'Called in: says the wash gate will not open',
+		// Declined, not expired, so retrying the payment works in the demo
+		failureReason: 'Card declined',
 	},
 	{
 		firstName: 'Priya',
@@ -290,6 +312,24 @@ const demoCustomers = (): SeedCustomer[] => [
 		],
 		singleWashes: 4,
 	},
+	{
+		firstName: 'Sam',
+		lastName: 'Carter',
+		email: 'sam.carter@example.com',
+		phone: '4045550105',
+		vehicles: [
+			{
+				plate: 'EXP2468',
+				make: 'Subaru',
+				model: 'Outback',
+				year: 2020,
+				color: 'Green',
+				subscription: buildSubscription('overdue', 4),
+			},
+		],
+		// Expired card, so the fix is a card update link rather than a retry
+		failureReason: 'Card expired',
+	},
 ];
 
 const randomCustomer = (index: number): SeedCustomer => {
@@ -337,7 +377,7 @@ export const buildSeedData = (randomCount = 50) => {
 
 	for (let i = 0; i < rawCustomers.length; i++) {
 		// Pull out the seed-only fields so they aren't saved on the customer
-		const { note, singleWashes = 0, ...data } = rawCustomers[i];
+		const { note, singleWashes = 0, failureReason, ...data } = rawCustomers[i];
 
 		// Building the document here gives each customer and vehicle an _id that purchases can reference
 		const customer = new Customer(data);
@@ -346,11 +386,23 @@ export const buildSeedData = (randomCount = 50) => {
 		const customerPurchases: SeedPurchase[] = [];
 		for (let j = 0; j < customer.vehicles.length; j++) {
 			customerPurchases.push(
-				...buildMembershipPurchases(customer, customer.vehicles[j]),
+				...buildMembershipPurchases(
+					customer,
+					customer.vehicles[j],
+					failureReason,
+				),
 			);
 		}
 		customerPurchases.push(...buildSingleWashes(customer, singleWashes));
 		purchases.push(...customerPurchases);
+
+		// The card on file agrees with the failure reason: expired only when a charge failed for that
+		let cardExpired = false;
+		for (let j = 0; j < customerPurchases.length; j++) {
+			if (customerPurchases[j].failureReason === 'Card expired')
+				cardExpired = true;
+		}
+		customer.set('paymentMethod', buildCard(cardExpired));
 
 		// Sign-up is the customer's first membership or purchase, so "Member since",
 		// the activity log, and purchase history all agree
