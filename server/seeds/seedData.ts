@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Types } from 'mongoose';
 import { Customer, CustomerDocument, VehicleDocument } from '../models';
+import addMonths from '../utils/addMonths';
 import PLANS, { PlanKey } from '../utils/plans';
 
 // Fixed seed so every run produces the same customers, which keeps demos predictable
@@ -108,17 +109,7 @@ const COLORS = [
 	'Beige',
 ];
 
-const monthsAgo = (months: number): Date => {
-	const date = new Date();
-	date.setMonth(date.getMonth() - months);
-	return date;
-};
-
-const addMonths = (date: Date, months: number): Date => {
-	const result = new Date(date);
-	result.setMonth(result.getMonth() + months);
-	return result;
-};
+const monthsAgo = (months: number): Date => addMonths(new Date(), -months);
 
 const randomPhone = (): string =>
 	faker.helpers.arrayElement(AREA_CODES) + faker.string.numeric(7);

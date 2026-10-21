@@ -7,8 +7,9 @@ const PLANS = {
 
 export type PlanKey = keyof typeof PLANS;
 
-// Narrows unknown input (like a request body field) to a valid plan key
+// Narrows unknown input (like a request body field) to a valid plan key.
+// Object.hasOwn, not `in`: `in` also matches inherited keys like "toString".
 export const isPlanKey = (value: unknown): value is PlanKey =>
-	typeof value === 'string' && value in PLANS;
+	typeof value === 'string' && Object.hasOwn(PLANS, value);
 
 export default PLANS;

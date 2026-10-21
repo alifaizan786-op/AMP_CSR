@@ -2,8 +2,11 @@ import dns from 'dns';
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-// Node on some Windows networks can't resolve Atlas SRV records with the default DNS
-dns.setServers(['8.8.8.8', '1.1.1.1']);
+// Opt-in workaround for networks whose DNS can't resolve Atlas SRV records (seen on some
+// Windows setups). Off unless DNS_SERVERS is set, so production uses the host's resolver.
+if (process.env.DNS_SERVERS) {
+	dns.setServers(process.env.DNS_SERVERS.split(','));
+}
 
 const uri = process.env.MONGODB_URI;
 if (!uri)
