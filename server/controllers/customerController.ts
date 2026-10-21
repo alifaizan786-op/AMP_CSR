@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { isValidObjectId, QueryFilter } from 'mongoose';
 import { Activity, Customer, CustomerData, Purchase } from '../models';
+import assertVersion from '../utils/assertVersion';
 import {
 	buildSearchFilter,
 	isCustomerStatus,
@@ -119,6 +120,7 @@ export const updateCustomer = async (
 	const customer = await findCustomer(req.params.id);
 	// Express 5 leaves req.body undefined when a request has no body
 	const body = req.body ?? {};
+	assertVersion(customer, body.expectedVersion);
 	const changes: string[] = [];
 
 	for (let i = 0; i < EDITABLE_FIELDS.length; i++) {

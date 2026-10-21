@@ -58,10 +58,12 @@ describe('errorHandler', () => {
 		expect(res.body.message).toContain('Please enter a valid phone number');
 	});
 
-	it('turns a duplicate key into a 409', async () => {
+	// `field` tells the client the problem is a value it sent, not stale data
+	it('turns a duplicate key into a 409 naming the field', async () => {
 		const res = await request(appThatThrows({ code: 11000 })).post('/');
 
 		expect(res.status).toBe(409);
+		expect(res.body.field).toBe('email');
 	});
 
 	// A real malformed body, so express.json() produces the error itself

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { VehicleDocument } from '../models';
 import addMonths from '../utils/addMonths';
+import assertVersion from '../utils/assertVersion';
 import findCustomer from '../utils/findCustomer';
 import findVehicle from '../utils/findVehicle';
 import formatMoney from '../utils/formatMoney';
@@ -134,6 +135,7 @@ export const changePlan = async (
 	}
 
 	const customer = await findCustomer(req.params.id);
+	assertVersion(customer, req.body.expectedVersion);
 	const vehicle = findVehicle(customer, req.params.vehicleId);
 	const subscription = vehicle.subscription;
 

@@ -37,22 +37,23 @@ const errorHandler = (
 
 	// Someone else saved this customer between our load and our save (see optimisticConcurrency)
 	if (error instanceof mongoose.Error.VersionError) {
-		return res.status(409).json({
-			message:
-				'This account was just changed by someone else. Refresh and try again.',
-		});
+		return res
+			.status(409)
+			.json({ message: 'This account was just changed by someone else' });
 	}
 
-	// MongoDB duplicate key error, e.g. an email that already belongs to another customer
+	// MongoDB duplicate key error, e.g. an email that already belongs to another customer.
+	// `field` tells the client this is about a value it sent, not about stale data.
 	if (
 		typeof error === 'object' &&
 		error !== null &&
 		'code' in error &&
 		error.code === 11000
 	) {
-		return res
-			.status(409)
-			.json({ message: 'That email is already in use by another customer' });
+		return res.status(409).json({
+			message: 'That email is already in use by another customer',
+			field: 'email',
+		});
 	}
 
 	console.error(error);
