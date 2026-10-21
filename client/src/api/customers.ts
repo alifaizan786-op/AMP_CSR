@@ -32,11 +32,16 @@ export const getCustomers = (
 export const getCustomer = (id: string, signal?: AbortSignal) =>
 	request<CustomerDetailResponse>(`/customers/${id}`, { signal });
 
-// PATCH sends only the fields that changed; the server returns the updated customer
-export const updateCustomer = (id: string, fields: Partial<AccountFields>) =>
+// PATCH sends only the fields that changed, plus the version the CSR was looking at,
+// so the server can refuse to overwrite a newer change (409)
+export const updateCustomer = (
+	id: string,
+	fields: Partial<AccountFields>,
+	expectedVersion: number,
+) =>
 	request<Customer>(`/customers/${id}`, {
 		method: 'PATCH',
-		body: JSON.stringify(fields),
+		body: JSON.stringify({ ...fields, expectedVersion }),
 	});
 
 // Returns the new activity entry, not the customer

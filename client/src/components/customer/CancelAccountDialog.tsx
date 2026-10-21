@@ -67,7 +67,11 @@ const CancelAccountDialog = ({
 
 	return (
 		<FormDialog
-			title={`Cancel all memberships for ${name}?`}
+			title={
+				live.length === 1
+					? `Cancel the membership for ${name}?`
+					: `Cancel all memberships for ${name}?`
+			}
 			submitLabel={
 				live.length === 1 ? 'Cancel membership' : 'Cancel all memberships'
 			}

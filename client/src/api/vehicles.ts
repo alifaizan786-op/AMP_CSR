@@ -72,13 +72,15 @@ export const startMembership = (
 		{ method: 'POST', body: JSON.stringify({ plan }) },
 	);
 
-// No charge; the new price applies from the next billing date. Refused (409) while overdue.
+// No charge; the new price applies from the next billing date. Refused (409) while overdue,
+// or if the account changed since the CSR loaded it (expectedVersion)
 export const changePlan = (
 	customerId: string,
 	vehicleId: string,
 	plan: PlanKey,
+	expectedVersion: number,
 ) =>
 	request<Customer>(
 		`/customers/${customerId}/vehicles/${vehicleId}/subscription`,
-		{ method: 'PATCH', body: JSON.stringify({ plan }) },
+		{ method: 'PATCH', body: JSON.stringify({ plan, expectedVersion }) },
 	);

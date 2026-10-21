@@ -34,6 +34,8 @@ export interface Customer {
 	vehicles: Vehicle[];
 	createdAt: string;
 	updatedAt: string;
+	// Version, bumped on every save; sent back with edits so the server can reject stale ones
+	__v: number;
 }
 
 // The list endpoint only returns the fields a table row needs

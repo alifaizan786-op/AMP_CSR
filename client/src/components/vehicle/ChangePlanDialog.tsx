@@ -29,6 +29,9 @@ const ChangePlanDialog = ({
 	const [plan, setPlan] = useState<PlanKey | ''>('');
 	const [serverError, setServerError] = useState('');
 	const [saving, setSaving] = useState(false);
+	// Set when the save failed because the membership or account changed elsewhere;
+	// close and reopen to choose again from the current plan
+	const [conflicted, setConflicted] = useState(false);
 
 	const subscription = vehicle.subscription;
 	if (!subscription) return null;
@@ -43,7 +46,7 @@ const ChangePlanDialog = ({
 		setSaving(true);
 		setServerError('');
 		try {
-			await changePlan(customer._id, vehicle._id, plan);
+			await changePlan(customer._id, vehicle._id, plan, customer.__v);
 			onSaved(
 				`${vehicle.plate} moved to ${PLANS[plan].name}. ${newPrice} from ${nextBilling}`,
 			);
@@ -51,7 +54,10 @@ const ChangePlanDialog = ({
 			// e.g. 409 if the payment failed since the page loaded
 			const { message, stale } = describeWriteError(err);
 			setServerError(message);
-			if (stale) onStale();
+			if (stale) {
+				setConflicted(true);
+				onStale();
+			}
 			setSaving(false);
 		}
 	};
@@ -63,7 +69,7 @@ const ChangePlanDialog = ({
 			maxWidth='md'
 			saving={saving}
 			serverError={serverError}
-			canSubmit={plan !== ''}
+			canSubmit={plan !== '' && !conflicted}
 			onSubmit={handleSubmit}
 			onClose={onClose}>
 			<PlanCards

@@ -1,11 +1,13 @@
-// Carries the HTTP status so pages can react differently,
-// e.g. show "not found" on a 404
+// Carries the HTTP status so pages can react differently, e.g. show "not found" on a 404.
+// `field` is set when the server says the problem is a specific value we sent.
 export class ApiError extends Error {
 	status: number;
+	field?: string;
 
-	constructor(message: string, status: number) {
+	constructor(message: string, status: number, field?: string) {
 		super(message);
 		this.status = status;
+		this.field = field;
 	}
 }
 
@@ -27,6 +29,7 @@ export const request = async <T>(
 		throw new ApiError(
 			data?.message ?? 'Something went wrong. Please try again.',
 			response.status,
+			data?.field,
 		);
 	}
 
@@ -34,11 +37,14 @@ export const request = async <T>(
 };
 
 // A 409 or 404 on a write usually means the data changed after the page loaded
-// (another tab or CSR got there first), so the page should reload what it shows
+// (another tab or CSR got there first), so the page should reload what it shows.
+// A conflict about a specific field (e.g. an email already in use) is about what was typed instead.
 export const describeWriteError = (err: unknown) => {
 	const message = err instanceof Error ? err.message : 'Something went wrong';
 	const stale =
-		err instanceof ApiError && (err.status === 409 || err.status === 404);
+		err instanceof ApiError &&
+		(err.status === 409 || err.status === 404) &&
+		!err.field;
 	return {
 		stale,
 		message: stale

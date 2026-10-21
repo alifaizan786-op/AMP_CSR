@@ -48,6 +48,9 @@ const EditAccountDialog = ({
 	const [errors, setErrors] = useState<AccountErrors>({});
 	const [serverError, setServerError] = useState('');
 	const [saving, setSaving] = useState(false);
+	// Set when the account changed elsewhere: the form holds old values for fields the CSR
+	// didn't touch, so saving it again would undo the other change. Close and reopen instead.
+	const [conflicted, setConflicted] = useState(false);
 
 	// Only send what changed, which is what PATCH is for
 	const changes: Partial<AccountFields> = {};
@@ -72,14 +75,16 @@ const EditAccountDialog = ({
 		setSaving(true);
 		setServerError('');
 		try {
-			await updateCustomer(customer._id, changes);
+			await updateCustomer(customer._id, changes, customer.__v);
 			onSaved();
 		} catch (err) {
-			// Keep the dialog open so nothing typed is lost. A 409 here is either "email already
-			// in use" or "changed by someone else", and the server's own message fits both, so it's
-			// shown as is; the quiet reload only matters for the second.
-			setServerError((err as Error).message);
-			if (describeWriteError(err).stale) onStale();
+			// Keep the dialog open so nothing typed is lost
+			const { message, stale } = describeWriteError(err);
+			setServerError(message);
+			if (stale) {
+				setConflicted(true);
+				onStale();
+			}
 			setSaving(false);
 		}
 	};
@@ -89,7 +94,7 @@ const EditAccountDialog = ({
 			title='Edit account'
 			saving={saving}
 			serverError={serverError}
-			canSubmit={hasChanges}
+			canSubmit={hasChanges && !conflicted}
 			onSubmit={handleSubmit}
 			onClose={onClose}>
 			{FIELDS.map((field) => (
