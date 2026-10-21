@@ -17,6 +17,7 @@ npm run dev            # starts the API on http://localhost:3001
 | ------------- | ------------------------------------------------------------------- |
 | `MONGODB_URI` | MongoDB connection string, including the database name (`/amp_csr`) |
 | `PORT`        | Port for the API. Defaults to `3001`                                |
+| `DNS_SERVERS` | Optional. Comma-separated DNS servers for networks that can't resolve the Atlas address (e.g. `8.8.8.8,1.1.1.1`). Leave unset in production |
 
 ### Scripts
 
@@ -27,6 +28,7 @@ npm run dev            # starts the API on http://localhost:3001
 | `npm start`         | Runs the compiled build                                   |
 | `npm run seed`      | Clears all collections and loads demo data                |
 | `npm run typecheck` | Type-checks without emitting files                        |
+| `npm test`          | Runs the unit tests (Vitest)                              |
 
 ## Data model
 
