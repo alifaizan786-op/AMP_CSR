@@ -186,8 +186,10 @@ Returns the full customer with vehicles and subscriptions, their purchase histor
 Send any of `firstName`, `lastName`, `email`, `phone`. Other fields are ignored; vehicles and subscriptions have their own endpoints. Each real change is recorded in the activity log.
 
 ```json
-{ "email": "jordan.m@example.com", "phone": "(470) 555-1212" }
+{ "email": "jordan.m@example.com", "phone": "(470) 555-1212", "expectedVersion": 3 }
 ```
+
+`expectedVersion` is required: the customer's `__v` as the client last loaded it. If the customer has changed since, the update is refused with `409`, so a stale page can't overwrite a newer change.
 
 Returns the updated customer.
 
@@ -195,7 +197,7 @@ Returns the updated customer.
 | ----- | ----------------------------------------------------------- |
 | `400` | Invalid id, a field isn't text, or a value fails validation |
 | `404` | Customer not found                                          |
-| `409` | Email already belongs to another customer                   |
+| `409` | Email already belongs to another customer (the body includes `"field": "email"`), or the customer changed since `expectedVersion` |
 
 ### Add a note
 
@@ -270,8 +272,10 @@ Charges the first month and sets the next billing date one month out. Returns `2
 `PATCH /api/customers/:id/vehicles/:vehicleId/subscription`
 
 ```json
-{ "plan": "ultimate" }
+{ "plan": "ultimate", "expectedVersion": 3 }
 ```
+
+The new price applies from the next billing date (no proration). `expectedVersion` is required, as for account updates. Returns `409` if the membership is cancelled or overdue (an overdue payment must be resolved first), or if the customer changed since `expectedVersion`.
 
 The new price applies from the next billing date (no proration). Returns `409` if the membership is cancelled or overdue; an overdue payment must be resolved first.
 

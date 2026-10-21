@@ -37,7 +37,7 @@ No login needed. All customers are generated demo data.
 - **Retry payment** for an overdue membership, with a confirm that shows the amount before charging
 - **Cancel account** for customers with several cars: one step that ends every membership in a single save, warns about unpaid charges, and keeps the account and history so the customer can rejoin
 - **CSR notes** on the account for whoever takes the next call, shown in the activity log alongside automatic changes
-- **Two CSRs, one customer**: if the account changed elsewhere since the page loaded, the save is rejected, the dialog says so, and the page quietly reloads the latest data
+- **Two CSRs, one customer**: account edits and plan changes carry the version the CSR loaded, so a save made from an out-of-date page is rejected instead of overwriting a newer change. The dialog says so and the page quietly reloads the latest data
 - Validation on both the client (instant feedback) and the server (the source of truth), with server errors shown in the dialog without losing what was typed
 - **Unit tests** for the billing, status, search, and error rules (`npm test`)
 
@@ -110,7 +110,7 @@ Full API reference: [server/README.md](server/README.md)
 - **After a save, the detail page refetches quietly.** A write can also add activity entries or purchases, so reloading everything is simpler and safer than patching pieces of local state. The current data stays on screen meanwhile, so there's no spinner flash.
 - **One shared dialog shell (`FormDialog`)** handles the error alert, saving spinner, and blocking close mid-save, so each dialog only defines its fields and what happens on submit.
 - **One deployed service.** Express serves the built React app with a fallback to `index.html` for client-side routes, so there's one URL, no CORS setup, and the client calls a relative `/api`.
-- **Optimistic concurrency on customers.** Every save checks the document's version, so two simultaneous requests (two CSRs, two tabs, a network retry) can't both apply. The second gets a 409, and the client reloads the latest data. This also stops a double click on "retry payment" from charging twice.
+- **Two layers of conflict protection.** Every save checks the customer's version (Mongoose optimistic concurrency), so two requests racing on the server can't both apply; this is what stops a double click on "retry payment" from charging twice. That alone doesn't catch a CSR acting on a page loaded minutes earlier, so edits that no business rule guards (account details, plan changes) also send the version the CSR loaded, and the server returns 409 if it has moved on. Other actions are already guarded by their rules ("has no active membership", "already has a membership").
 - **Adding a car and starting a membership are separate steps**, so the flow is the same whether the car is new or has been on the account for years.
 - **Cancelling an account ends memberships; it doesn't delete anything.** Every membership is cancelled in one save, so it can't half-succeed, and the account, vehicles, purchases, and activity stay for the next call or a rejoin.
 
