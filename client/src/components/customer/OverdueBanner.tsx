@@ -1,15 +1,21 @@
 import { Alert, AlertTitle } from '@mui/material';
-import type { Purchase, Vehicle } from '../../types';
+import type { PaymentMethod, Purchase, Vehicle } from '../../types';
+import { formatExpiry, isCardExpired } from '../../utils/card';
 import { formatDate, formatMoney } from '../../utils/format';
 
 interface OverdueBannerProps {
 	vehicles: Vehicle[];
 	purchases: Purchase[];
+	paymentMethod?: PaymentMethod;
 }
 
 // The first thing a CSR needs on an overdue account: which car, how much, when, and why it failed.
 // Driven by subscription status, so an old failed charge that was later paid never shows here.
-const OverdueBanner = ({ vehicles, purchases }: OverdueBannerProps) => {
+const OverdueBanner = ({
+	vehicles,
+	purchases,
+	paymentMethod,
+}: OverdueBannerProps) => {
 	const lines: string[] = [];
 
 	for (let i = 0; i < vehicles.length; i++) {
@@ -39,6 +45,13 @@ const OverdueBanner = ({ vehicles, purchases }: OverdueBannerProps) => {
 	}
 
 	if (lines.length === 0) return null;
+
+	// The next step, so the CSR doesn't try a retry that can't work
+	if (paymentMethod && isCardExpired(paymentMethod)) {
+		lines.push(
+			`Card on file expired ${formatExpiry(paymentMethod)}. Send a card update link, then retry once they've updated it.`,
+		);
+	}
 
 	return (
 		<Alert severity='error' sx={{ mb: 3 }}>

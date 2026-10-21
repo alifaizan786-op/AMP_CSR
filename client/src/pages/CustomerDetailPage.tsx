@@ -149,7 +149,11 @@ const CustomerDetailPage = () => {
 				<StatusChip status={customer.status} />
 			</Stack>
 
-			<OverdueBanner vehicles={customer.vehicles} purchases={data.purchases} />
+			<OverdueBanner
+				vehicles={customer.vehicles}
+				purchases={data.purchases}
+				paymentMethod={customer.paymentMethod}
+			/>
 
 			<Grid container spacing={3}>
 				<Grid size={{ xs: 12, md: 4 }} sx={{ order: { md: 2 } }}>

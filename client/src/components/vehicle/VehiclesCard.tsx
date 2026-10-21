@@ -2,6 +2,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { Button, Divider, Paper, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import type { Customer, Vehicle } from '../../types';
+import { isCardExpired } from '../../utils/card';
 import AddVehicleDialog from './AddVehicleDialog';
 import CancelMembershipDialog from './CancelMembershipDialog';
 import ChangePlanDialog from './ChangePlanDialog';
@@ -68,6 +69,10 @@ const VehiclesCard = ({ customer, onSaved, onStale }: VehiclesCardProps) => {
 						<VehicleRow
 							key={vehicle._id}
 							vehicle={vehicle}
+							cardExpired={
+								!!customer.paymentMethod &&
+								isCardExpired(customer.paymentMethod)
+							}
 							onStart={setStarting}
 							onChangePlan={setChanging}
 							onRetry={setRetrying}

@@ -51,6 +51,12 @@ export const addNote = (customerId: string, message: string) =>
 		body: JSON.stringify({ message }),
 	});
 
+// Emails the customer a link to update their card; returns the address it went to
+export const sendPaymentLink = (id: string) =>
+	request<{ sentTo: string }>(`/customers/${id}/payment-link`, {
+		method: 'POST',
+	});
+
 // Cancels every active and overdue membership in one request; the account and its history stay
 export const cancelAccount = (id: string, reason: string) =>
 	request<Customer>(`/customers/${id}/cancel`, {

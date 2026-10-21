@@ -24,6 +24,14 @@ export interface Vehicle {
 	subscription?: Subscription;
 }
 
+// Display details from the payment processor; the full card number never reaches the app
+export interface PaymentMethod {
+	brand: string;
+	last4: string;
+	expMonth: number;
+	expYear: number;
+}
+
 export interface Customer {
 	_id: string;
 	firstName: string;
@@ -32,6 +40,7 @@ export interface Customer {
 	phone: string;
 	status: CustomerStatus;
 	vehicles: Vehicle[];
+	paymentMethod?: PaymentMethod;
 	createdAt: string;
 	updatedAt: string;
 	// Version, bumped on every save; sent back with edits so the server can reject stale ones

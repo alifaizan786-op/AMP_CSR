@@ -95,6 +95,8 @@ const GroupLabel = ({ children }: { children: string }) => (
 
 interface VehicleRowProps {
 	vehicle: Vehicle;
+	// A retry can't succeed on an expired card, so Retry payment explains what to do instead
+	cardExpired: boolean;
 	onStart: (vehicle: Vehicle) => void;
 	onChangePlan: (vehicle: Vehicle) => void;
 	onRetry: (vehicle: Vehicle) => void;
@@ -106,6 +108,7 @@ interface VehicleRowProps {
 
 const VehicleRow = ({
 	vehicle,
+	cardExpired,
 	onStart,
 	onChangePlan,
 	onRetry,
@@ -206,7 +209,7 @@ const VehicleRow = ({
 					icon={<AddCircleOutlineIcon fontSize='small' />}
 					disabledReason={
 						isOverdue
-							? 'Already has a membership. Retry the payment first'
+							? 'Already has a membership. Resolve the overdue payment first'
 							: isLive
 								? 'Already has a membership. Use Change plan'
 								: undefined
@@ -246,7 +249,13 @@ const VehicleRow = ({
 				<ActionItem
 					label='Retry payment'
 					icon={<ReplayIcon fontSize='small' />}
-					disabledReason={isOverdue ? undefined : 'No overdue payment'}
+					disabledReason={
+						!isOverdue
+							? 'No overdue payment'
+							: cardExpired
+								? 'Card on file expired. Send a card update link first'
+								: undefined
+					}
 					onClick={runAction(onRetry)}
 				/>
 

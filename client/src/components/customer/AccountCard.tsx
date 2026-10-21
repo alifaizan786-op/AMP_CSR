@@ -11,10 +11,12 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import type { Customer } from '../../types';
+import { formatExpiry, isCardExpired } from '../../utils/card';
 import { formatDate, formatPhone } from '../../utils/format';
 import { hasLiveMembership } from '../../utils/vehicleForm';
 import CancelAccountDialog from './CancelAccountDialog';
 import EditAccountDialog from './EditAccountDialog';
+import SendPaymentLinkDialog from './SendPaymentLinkDialog';
 
 interface AccountCardProps {
 	customer: Customer;
@@ -26,7 +28,10 @@ interface AccountCardProps {
 const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 	const [editing, setEditing] = useState(false);
 	const [cancelling, setCancelling] = useState(false);
+	const [sendingLink, setSendingLink] = useState(false);
 	const hasLive = customer.vehicles.some(hasLiveMembership);
+	const card = customer.paymentMethod;
+	const cardExpired = card ? isCardExpired(card) : false;
 
 	const rows = [
 		{
@@ -41,8 +46,26 @@ const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 				</Link>
 			),
 		},
-				// How long they've been a customer often shapes the call, e.g. a courtesy for a long-time member
+		// How long they've been a customer often shapes the call, e.g. a courtesy for a long-time member
 		{ label: 'Member since', value: formatDate(customer.createdAt) },
+		{
+			label: 'Card on file',
+			value: card ? (
+				<>
+					{`${card.brand} ending ${card.last4}, `}
+					{/* Red when expired, since that's usually why a payment failed */}
+					<Box
+						component='span'
+						sx={
+							cardExpired ? { color: 'error.main', fontWeight: 600 } : undefined
+						}>
+						{`${cardExpired ? 'expired' : 'exp'} ${formatExpiry(card)}`}
+					</Box>
+				</>
+			) : (
+				'No card on file'
+			),
+		},
 	];
 
 	return (
@@ -71,6 +94,14 @@ const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 				))}
 			</Stack>
 
+			<Button
+				size='small'
+				variant={cardExpired ? 'contained' : 'text'}
+				sx={{ mt: 1.5 }}
+				onClick={() => setSendingLink(true)}>
+				Send card update link
+			</Button>
+
 			{/* Set apart from Edit and in red, since it ends every membership on the account.
 			    Always visible; when there's nothing to cancel, the tooltip says so. */}
 			<Divider sx={{ my: 2 }} />
@@ -96,6 +127,17 @@ const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 						onSaved('Account updated');
 					}}
 					onStale={onStale}
+				/>
+			)}
+
+			{sendingLink && (
+				<SendPaymentLinkDialog
+					customer={customer}
+					onClose={() => setSendingLink(false)}
+					onSaved={(message) => {
+						setSendingLink(false);
+						onSaved(message);
+					}}
 				/>
 			)}
 
