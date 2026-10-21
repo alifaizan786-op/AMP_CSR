@@ -9,21 +9,21 @@ No login needed. All customers are generated demo data.
 
 ## What it does
 
-| Requirement                         | Where                                                                                                                                                      |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                                 |
-| Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity             |
-| Edit account info                   | **Edit** on the Account card: name, email, phone                                                                                                           |
+| Requirement                         | Where                                                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                             |
+| Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity         |
+| Edit account info                   | **Edit** on the Account card: name, email, phone                                                                                                       |
 | View and edit vehicle subscriptions | Each vehicle's ⋮ menu: **start** a membership, **change plan**, **transfer** it to another car, or **cancel** it. Vehicles are added and removed there too |
 
 ### The four support calls
 
-| Call                                                                | How a CSR handles it                                                                                                                      |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --- | --- |
-| "I want to cancel my account."                                      | **Cancel account** on the Account card ends every membership in one step, with a reason. For one car, **Cancel membership** in its ⋮ menu |
-| "I have a question about a recent purchase."                        | Purchase history: date, description, plate, amount, status, and why a charge failed                                                       |
-| "I purchased a new vehicle and I want my subscription transferred." | ⋮ → **Transfer membership** → a new vehicle, optionally removing the old car in the same step                                             |
-| "I am not able to get a wash." (overdue)                            | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment**                                                         |     |     |
+| Call                                                                  | How a CSR handles it                                                                                                                  |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| "I want to cancel my account."                                        | **Cancel account** on the Account card ends every membership in one step, with a reason. For one car, **Cancel membership** in its ⋮ menu |
+| "I have a question about a recent purchase."                          | Purchase history: date, description, plate, amount, status, and why a charge failed                                                   |
+| "I purchased a new vehicle and I want my subscription transferred."   | ⋮ → **Transfer membership** → a new vehicle, optionally removing the old car in the same step                                         |
+| "I am not able to get a wash." (overdue)                              | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment**                                                     |                                                     |     |     |
 
 ### Beyond the brief
 
@@ -79,20 +79,23 @@ In development, Vite proxies `/api` to the Express server. For a production buil
 
 ```
 client/src/
-  api/          fetch wrapper (ApiError) and one function per endpoint
-  pages/        CustomerListPage, CustomerDetailPage
-  components/   shared pieces (FormDialog, CancelReasonField, StatusChip, PlateBadge)
-    customer/   account card with the edit and cancel-account dialogs, purchases, activity and notes, overdue banner
-    vehicle/    vehicle rows and their actions menu, plan cards, and the dialogs for each action
-  hooks/        useDebounce, useVehicleForm
-  utils/        formatting and form validation
+├── api/              fetch wrapper and one function per endpoint
+├── pages/            customer list and customer detail
+├── components/       shared: FormDialog, CancelReasonField, StatusChip, PlateBadge
+│   ├── customer/     account card, purchases, activity, overdue banner
+│   └── vehicle/      vehicle rows, actions menu, plan cards, action dialogs
+├── hooks/            useDebounce, useVehicleForm
+└── utils/            formatting and form validation
+
 server/
-  models/       Customer (vehicles and subscriptions embedded), Purchase, Activity
-  routes/       URL to controller mapping only
-  controllers/  request handling
-  utils/        business rules and shared helpers (status, billing dates, cancellation, search, ...)
-  tests/        unit tests (Vitest, Supertest)
-  seeds/        reproducible demo data (Faker with a fixed seed)
+├── models/           Customer (vehicles embedded), Purchase, Activity
+├── routes/           URL → controller mapping
+├── controllers/      request handling
+├── middleware/       errorHandler
+├── utils/            business rules: status, billing dates, cancellation, search
+├── tests/            Vitest + Supertest unit tests
+└── seeds/            reproducible demo data
+
 ```
 
 Full API reference: [server/README.md](server/README.md)
