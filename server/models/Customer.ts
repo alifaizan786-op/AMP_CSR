@@ -1,4 +1,5 @@
 import { InferSchemaType, Schema, model } from 'mongoose';
+import deriveCustomerStatus from '../utils/customerStatus';
 import PLANS from '../utils/plans';
 
 const subscriptionSchema = new Schema(
@@ -103,18 +104,9 @@ customerSchema.index({ phone: 1 });
 customerSchema.index({ 'vehicles.plate': 1 });
 customerSchema.index({ status: 1 });
 
-// Status is derived from subscriptions so it can never drift out of sync.
-// Overdue wins, since it's the status a CSR most needs to see.
+// Recalculated on every save; the rule lives in a plain function so it can be unit tested
 customerSchema.pre('save', function () {
-	const statuses: string[] = [];
-	for (let i = 0; i < this.vehicles.length; i++) {
-		const subscription = this.vehicles[i].subscription;
-		if (subscription) statuses.push(subscription.status);
-	}
-
-	if (statuses.includes('overdue')) this.status = 'overdue';
-	else if (statuses.includes('active')) this.status = 'active';
-	else this.status = 'inactive';
+	this.status = deriveCustomerStatus(this.vehicles);
 });
 
 export type CustomerData = InferSchemaType<typeof customerSchema>;
