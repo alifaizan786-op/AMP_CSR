@@ -9,21 +9,19 @@ No login needed. All customers are generated demo data.
 
 ## What it does
 
-| Requirement                         | Where                                                                                                                                                      |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                                 |
-| Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity             |
-| Edit account info                   | **Edit** on the Account card: name, email, phone. A car's details (plate, year, make, model, color) are corrected from its ⋮ menu                          |
-| View and edit vehicle subscriptions | Each vehicle's ⋮ menu: **start** a membership, **change plan**, **transfer** it to another car, or **cancel** it. Vehicles are added and removed there too |
+| Requirement                         | Where                                                                                                                                                    |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                               |
+| Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity           |
+| Edit account info                   | **Edit** on the Account card: name, email, phone. A car's details (plate, year, make, model, color) are corrected from its menu                          |
+| View and edit vehicle subscriptions | Each vehicle's menu: **start** a membership, **change plan**, **transfer** it to another car, or **cancel** it. Vehicles are added and removed there too |
 
 ### The four support calls
 
-| Call                                                                | How a CSR handles it                                                                                                                           |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------- | --- | --- | --- |
-| "I want to cancel my account."                                      | **Cancel account** on the Account card ends every membership in one step, with a reason. For one car, **Cancel membership** in its ⋮ menu      |
-| "I have a question about a recent purchase."                        | Purchase history: date, description, plate, amount, status, and why a charge failed                                                            |
-| "I purchased a new vehicle and I want my subscription transferred." | ⋮ → **Transfer membership** → a new vehicle, optionally removing the old car in the same step                                                  |
-| "I am not able to get a wash." (overdue)                            | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment**. If the plate on file is wrong, ⋮ → **Edit vehicle details** | (overdue) | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment** |     |     |     |
+- **"I want to cancel my account."** Cancel account on the Account card ends every membership in one step, with a reason. For one car, use Cancel membership in that car's actions menu.
+- **"I have a question about a recent purchase."** Purchase history shows the date, description, plate, amount, status, and why a charge failed. A paid charge can be refunded from its row, with a reason.
+- **"I purchased a new vehicle and I want my subscription transferred."** Transfer membership in the car's actions menu, to a new vehicle, optionally removing the old car in the same step.
+- **"I am not able to get a wash."** The overdue banner says which car, how much, when, and why, and Retry payment is in the car's actions menu. If the plate on file is wrong, Edit vehicle details fixes it.
 
 ### Beyond the brief
 
@@ -31,10 +29,11 @@ No login needed. All customers are generated demo data.
 - **Search, tab, and page live in the URL**, so refresh, the back button, and shared links keep the CSR's place, and "Back to customers" returns to the same results
 - **Overdue banner** on the detail page showing which car, how much, when, and why the charge failed
 - **Activity log**: every change is recorded automatically with what it was before and after
-- **Every vehicle action in one place**: the ⋮ menu groups actions into Membership, Payment, and Vehicle. Unavailable actions stay visible with the reason (for example "Cancel or transfer the membership first"), and keyboard and screen reader users can reach those reasons too
+- **Every vehicle action in one place**: the menu groups actions into Membership, Payment, and Vehicle. Unavailable actions stay visible with the reason (for example "Cancel or transfer the membership first"), and keyboard and screen reader users can reach those reasons too
 - **Plan cards**: starting a membership or changing plans shows the plans side by side with what each includes, so the CSR can explain the difference. The button says what happens to the money: "Start and charge $29.99", or no charge today for a plan change
 - **Transfer options**: move a membership to an existing car or a new one, and optionally remove the old car in the same step (the "I sold my car" call)
 - **Retry payment** for an overdue membership, with a confirm that shows the amount before charging
+- **Refunds** from purchase history: the full amount, with a reason, and the membership is left alone. Two simultaneous refunds of the same charge can't both go through
 - **Cancel account** for customers with several cars: one step that ends every membership in a single save, warns about unpaid charges, and keeps the account and history so the customer can rejoin
 - **CSR notes** on the account for whoever takes the next call, shown in the activity log alongside automatic changes
 - **Two CSRs, one customer**: account edits and plan changes carry the version the CSR loaded, so a save made from an out-of-date page is rejected instead of overwriting a newer change. The dialog says so and the page quietly reloads the latest data
@@ -45,12 +44,12 @@ No login needed. All customers are generated demo data.
 
 The seed includes one customer for each common support call:
 
-| Customer     | Situation                            | Try                                                                                                                                                   |
-| ------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Jordan Miles | Overdue: latest charge declined      | Retry his payment from the ⋮ menu and watch the banner clear. Or add a second car and transfer his membership to it; the overdue status moves with it |
-| Priya Shah   | Two cars, both on active memberships | Try to remove a car (blocked, with the reason). Transfer one membership to a new car. Or **Cancel account** to end both in one step                   |
-| Marcus Bell  | Cancelled membership                 | Start a new membership on his car, or remove it (allowed, since the membership is cancelled)                                                          |
-| Elena Ruiz   | No membership, single washes only    | Add a car, then start a membership from its ⋮ menu and watch the charge appear in purchase history                                                    |
+| Customer     | Situation                            | Try                                                                                                                                                 |
+| ------------ | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jordan Miles | Overdue: latest charge declined      | Retry his payment from the menu and watch the banner clear. Or add a second car and transfer his membership to it; the overdue status moves with it |
+| Priya Shah   | Two cars, both on active memberships | Try to remove a car (blocked, with the reason). Transfer one membership to a new car. Or **Cancel account** to end both in one step                 |
+| Marcus Bell  | Cancelled membership                 | Start a new membership on his car, or remove it (allowed, since the membership is cancelled)                                                        |
+| Elena Ruiz   | No membership, single washes only    | Add a car, then start a membership from its menu and watch the charge appear in purchase history                                                    |
 
 Searching `404 555` finds all four by phone. Searching a plate like `ovr-1234` works too.
 
@@ -82,7 +81,8 @@ client/src/
 ├── api/              fetch wrapper and one function per endpoint
 ├── pages/            customer list and customer detail
 ├── components/       shared: FormDialog, CancelReasonField, StatusChip, PlateBadge
-│   ├── customer/     account card, purchases, activity, overdue banner
+│   ├── customer/     account card, activity, overdue banner
+│   ├── purchase/     purchase history and refunds
 │   └── vehicle/      vehicle rows, actions menu, plan cards, action dialogs
 ├── hooks/            useDebounce, useVehicleForm
 └── utils/            formatting and form validation
@@ -110,7 +110,7 @@ Full API reference: [server/README.md](server/README.md)
 - **After a save, the detail page refetches quietly.** A write can also add activity entries or purchases, so reloading everything is simpler and safer than patching pieces of local state. The current data stays on screen meanwhile, so there's no spinner flash.
 - **One shared dialog shell (`FormDialog`)** handles the error alert, saving spinner, and blocking close mid-save, so each dialog only defines its fields and what happens on submit.
 - **One deployed service.** Express serves the built React app with a fallback to `index.html` for client-side routes, so there's one URL, no CORS setup, and the client calls a relative `/api`.
-- **Two layers of conflict protection.** Every save checks the customer's version (Mongoose optimistic concurrency), so two requests racing on the server can't both apply; this is what stops a double click on "retry payment" from charging twice. That alone doesn't catch a CSR acting on a page loaded minutes earlier, so edits that no business rule guards (account details, plan changes) also send the version the CSR loaded, and the server returns 409 if it has moved on. Other actions are already guarded by their rules ("has no active membership", "already has a membership").
+- **Two layers of conflict protection.** Every save checks the customer's version (Mongoose optimistic concurrency), so two requests racing on the server can't both apply; this is what stops a double click on "retry payment" from charging twice. That alone doesn't catch a CSR acting on a page loaded minutes earlier, so edits that no business rule guards (account details, plan changes) also send the version the CSR loaded, and the server returns 409 if it has moved on. Other actions are already guarded by their rules ("has no active membership", "already has a membership").Refunds use a third technique: purchases are separate documents, so a refund is a single conditional update that only applies while the purchase is still paid.
 - **Adding a car and starting a membership are separate steps**, so the flow is the same whether the car is new or has been on the account for years.
 - **Cancelling an account ends memberships; it doesn't delete anything.** Every membership is cancelled in one save, so it can't half-succeed, and the account, vehicles, purchases, and activity stay for the next call or a rejoin.
 
@@ -123,7 +123,7 @@ Full API reference: [server/README.md](server/README.md)
 - **Coupons.** Coupon redemption is part of the platform but isn't modeled in this portal.
 - **Closing an account.** "Cancel account" ends every membership but keeps the account, vehicles, and history, so the purchase history stays available for later calls. Deleting a customer's data would be a separate, audited process.
 - **Cancellation is immediate.** There's no end-of-period cancellation or prorated refund. A production version would schedule the cancellation for the end of the paid period.
-- **Refunds.** Purchases can be viewed but not refunded. The purchase model already has `refunded` and `refundReason` fields for a refund action.
+- **Full refunds only.** Partial refunds would need a refunded amount on the purchase and support for several refunds per charge.
 - **Unpaid balances.** Cancelling keeps a failed charge in purchase history, but nothing tracks an outstanding balance on the account.
 - **Billing day.** Month-end dates are clamped (Jan 31 + 1 month = Feb 28), but a member who joined on the 31st then bills on the 28th from then on. Storing the original billing day would bring it back to the 31st when the month allows.
 - **Authentication.** There's no login, and every change is logged as "CSR". In production the author would come from the signed-in user, with roles for who can cancel or refund.
