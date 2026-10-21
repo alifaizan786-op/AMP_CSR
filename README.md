@@ -9,21 +9,21 @@ No login needed. All customers are generated demo data.
 
 ## What it does
 
-| Requirement                         | Where                                                                                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                             |
-| Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity         |
-| Edit account info                   | **Edit** on the Account card: name, email, phone                                                                                                       |
+| Requirement                         | Where                                                                                                                                                      |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| View a list of users                | Customer list: paginated table with name, email, phone, plates, and status                                                                                 |
+| Find and view a user's details      | One search box for name, email, phone, or plate. The detail page shows account info, vehicles with memberships, purchase history, and activity             |
+| Edit account info                   | **Edit** on the Account card: name, email, phone. A car's details (plate, year, make, model, color) are corrected from its ⋮ menu                          |
 | View and edit vehicle subscriptions | Each vehicle's ⋮ menu: **start** a membership, **change plan**, **transfer** it to another car, or **cancel** it. Vehicles are added and removed there too |
 
 ### The four support calls
 
-| Call                                                                  | How a CSR handles it                                                                                                                  |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| "I want to cancel my account."                                        | **Cancel account** on the Account card ends every membership in one step, with a reason. For one car, **Cancel membership** in its ⋮ menu |
-| "I have a question about a recent purchase."                          | Purchase history: date, description, plate, amount, status, and why a charge failed                                                   |
-| "I purchased a new vehicle and I want my subscription transferred."   | ⋮ → **Transfer membership** → a new vehicle, optionally removing the old car in the same step                                         |
-| "I am not able to get a wash." (overdue)                              | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment**                                                     |                                                     |     |     |
+| Call                                                                | How a CSR handles it                                                                                                                           |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------- | --- | --- | --- |
+| "I want to cancel my account."                                      | **Cancel account** on the Account card ends every membership in one step, with a reason. For one car, **Cancel membership** in its ⋮ menu      |
+| "I have a question about a recent purchase."                        | Purchase history: date, description, plate, amount, status, and why a charge failed                                                            |
+| "I purchased a new vehicle and I want my subscription transferred." | ⋮ → **Transfer membership** → a new vehicle, optionally removing the old car in the same step                                                  |
+| "I am not able to get a wash." (overdue)                            | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment**. If the plate on file is wrong, ⋮ → **Edit vehicle details** | (overdue) | The overdue banner says which car, how much, when, and why; ⋮ → **Retry payment** |     |     |     |
 
 ### Beyond the brief
 
@@ -119,6 +119,9 @@ Full API reference: [server/README.md](server/README.md)
 - **Integration tests.** Unit tests cover the pure business rules (`npm test`). Next would be API tests for transfer, the remove guard, and retry against an in-memory MongoDB, then a few end-to-end flows with Playwright.
 - **Write ordering and transactions.** A membership write saves the customer first, then records the purchase and activity separately. If the purchase insert failed, the membership would be active without a recorded charge. With a real payment provider I'd charge first (with an idempotency key), then update the membership, and wrap the writes in a MongoDB transaction.
 - **Payments are simulated.** Every charge succeeds except the seeded failures. A real version would use a payment provider and add a card-update flow, since retrying an expired card won't work.
+- **Payment methods.** The platform lets customers update their payment information, but cards aren't modeled here, so a CSR can't update a card for an expired-card decline. With a payment provider this would be a card-update link sent to the customer, not card numbers typed by the CSR.
+- **Coupons.** Coupon redemption is part of the platform but isn't modeled in this portal.
+- **Closing an account.** "Cancel account" ends every membership but keeps the account, vehicles, and history, so the purchase history stays available for later calls. Deleting a customer's data would be a separate, audited process.
 - **Cancellation is immediate.** There's no end-of-period cancellation or prorated refund. A production version would schedule the cancellation for the end of the paid period.
 - **Refunds.** Purchases can be viewed but not refunded. The purchase model already has `refunded` and `refundReason` fields for a refund action.
 - **Unpaid balances.** Cancelling keeps a failed charge in purchase history, but nothing tracks an outstanding balance on the account.
