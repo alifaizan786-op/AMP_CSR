@@ -8,7 +8,7 @@ import formatMoney from '../utils/formatMoney';
 import HttpError from '../utils/HttpError';
 import logActivity from '../utils/logActivity';
 import PLANS, { isPlanKey } from '../utils/plans';
-import readCancelReason from '../utils/readCancelReason';
+import readReason from '../utils/readReason';
 import {
 	chargeMembership,
 	describeVehicle,
@@ -224,7 +224,7 @@ export const cancelSubscription = async (
 	req: Request<VehicleParams>,
 	res: Response,
 ) => {
-	const reason = readCancelReason(req.body);
+	const reason = readReason(req.body, 'A cancellation reason is required');
 
 	const customer = await findCustomer(req.params.id);
 	const vehicle = findVehicle(customer, req.params.vehicleId);

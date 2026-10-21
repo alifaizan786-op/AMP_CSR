@@ -2,12 +2,14 @@ import HttpError from './HttpError';
 
 const MAX_REASON_LENGTH = 200;
 
-// Shared by single-membership and whole-account cancellations, so both follow the same rule
-const readCancelReason = (
+// Why a CSR cancelled or refunded something. Shared, so every reason follows the same rule;
+// only the message for a missing reason differs.
+const readReason = (
 	body: Record<string, unknown> | undefined,
+	missingMessage: string,
 ): string => {
 	const reason = typeof body?.reason === 'string' ? body.reason.trim() : '';
-	if (!reason) throw new HttpError(400, 'A cancellation reason is required');
+	if (!reason) throw new HttpError(400, missingMessage);
 	if (reason.length > MAX_REASON_LENGTH) {
 		throw new HttpError(
 			400,
@@ -17,4 +19,4 @@ const readCancelReason = (
 	return reason;
 };
 
-export default readCancelReason;
+export default readReason;

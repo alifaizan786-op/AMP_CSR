@@ -11,7 +11,7 @@ import findCustomer from '../utils/findCustomer';
 import HttpError from '../utils/HttpError';
 import logActivity from '../utils/logActivity';
 import parsePositiveInt from '../utils/parsePositiveInt';
-import readCancelReason from '../utils/readCancelReason';
+import readReason from '../utils/readReason';
 import {
 	endSubscription,
 	hasLiveSubscription,
@@ -176,7 +176,7 @@ export const cancelAccount = async (
 	req: Request<{ id: string }>,
 	res: Response,
 ) => {
-	const reason = readCancelReason(req.body);
+	const reason = readReason(req.body, 'A cancellation reason is required');
 	const customer = await findCustomer(req.params.id);
 
 	const cancelled: string[] = [];

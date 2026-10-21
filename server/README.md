@@ -223,6 +223,22 @@ Returns `201` with the new activity entry. Notes are trimmed and limited to 1,00
 
 Cancels every active and overdue membership on the account in one save, with the same rules as cancelling a single membership: a reason is required (max 200 characters), cancellation is immediate, and billing stops. The account, vehicles, and history stay, so the customer can rejoin later. Failed charges stay in purchase history. Returns `409` if there are no active or overdue memberships.
 
+### Refund a purchase
+
+`POST /api/customers/:id/purchases/:purchaseId/refund`
+
+```json
+{ "reason": "Charged twice for the same month" }
+```
+
+Refunds the full amount of a paid purchase and records the reason in the activity log. It doesn't change any membership; cancelling is a separate action. The update only applies while the purchase is still paid, so two simultaneous refunds can't both succeed. Returns the updated purchase.
+
+| Error | When                                                               |
+| ----- | ------------------------------------------------------------------ |
+| `400` | Missing reason (or over 200 characters), or an invalid purchase id |
+| `404` | Customer not found, or the purchase isn't on this account          |
+| `409` | The charge failed (nothing to refund), or it was already refunded  |
+
 ## Vehicles and memberships
 
 All routes below are under `/api/customers/:id/vehicles`. Every successful request returns the **full updated customer**, so the UI can replace its copy in one step. Every change is recorded in the activity log.

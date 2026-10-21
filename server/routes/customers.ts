@@ -6,6 +6,7 @@ import {
 	getCustomers,
 	updateCustomer,
 } from '../controllers/customerController';
+import purchaseRoutes from './purchases';
 import vehicleRoutes from './vehicles';
 
 const router = Router();
@@ -24,6 +25,9 @@ router.post('/:id/notes', addNote);
 
 // POST /api/customers/:id/cancel
 router.post('/:id/cancel', cancelAccount);
+
+// Purchase routes, under /api/customers/:id/purchases
+router.use('/:id/purchases', purchaseRoutes);
 
 // Vehicle and subscription routes,
 // under /api/customers/:id/vehicles
