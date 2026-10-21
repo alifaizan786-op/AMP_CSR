@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import type { Customer } from '../../types';
-import { formatPhone } from '../../utils/format';
+import { formatDate, formatPhone } from '../../utils/format';
 import { hasLiveMembership } from '../../utils/vehicleForm';
 import CancelAccountDialog from './CancelAccountDialog';
 import EditAccountDialog from './EditAccountDialog';
@@ -41,6 +41,8 @@ const AccountCard = ({ customer, onSaved, onStale }: AccountCardProps) => {
 				</Link>
 			),
 		},
+				// How long they've been a customer often shapes the call, e.g. a courtesy for a long-time member
+		{ label: 'Member since', value: formatDate(customer.createdAt) },
 	];
 
 	return (

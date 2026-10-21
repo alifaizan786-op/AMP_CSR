@@ -343,19 +343,37 @@ export const buildSeedData = (randomCount = 50) => {
 		const customer = new Customer(data);
 		customers.push(customer);
 
+		const customerPurchases: SeedPurchase[] = [];
 		for (let j = 0; j < customer.vehicles.length; j++) {
-			purchases.push(
+			customerPurchases.push(
 				...buildMembershipPurchases(customer, customer.vehicles[j]),
 			);
 		}
-		purchases.push(...buildSingleWashes(customer, singleWashes));
+		customerPurchases.push(...buildSingleWashes(customer, singleWashes));
+		purchases.push(...customerPurchases);
+
+		// Sign-up is the customer's first membership or purchase, so "Member since",
+		// the activity log, and purchase history all agree
+		const dates: Date[] = [];
+		for (let j = 0; j < customer.vehicles.length; j++) {
+			const startDate = customer.vehicles[j].subscription?.startDate;
+			if (startDate) dates.push(startDate);
+		}
+		for (let j = 0; j < customerPurchases.length; j++) {
+			dates.push(customerPurchases[j].createdAt);
+		}
+		let signedUp = dates.length ? dates[0] : monthsAgo(6);
+		for (let j = 1; j < dates.length; j++) {
+			if (dates[j] < signedUp) signedUp = dates[j];
+		}
+		customer.set('createdAt', signedUp);
 
 		activities.push({
 			customer: customer._id,
 			type: 'change',
 			message: 'Account created',
 			author: 'System',
-			createdAt: customer.vehicles[0]?.subscription?.startDate || monthsAgo(6),
+			createdAt: signedUp,
 		});
 		if (note)
 			activities.push({
