@@ -44,6 +44,15 @@ export const validateVehicle = (form: VehicleForm): VehicleErrors => {
 	return errors;
 };
 
+// Prefills the form with a car's current details, for editing them
+export const toVehicleForm = (vehicle: Vehicle): VehicleForm => ({
+	plate: vehicle.plate,
+	year: vehicle.year ? String(vehicle.year) : '',
+	make: vehicle.make ?? '',
+	model: vehicle.model ?? '',
+	color: vehicle.color ?? '',
+});
+
 // Only sends fields the CSR filled in, with year as a number
 export const toVehicleInput = (form: VehicleForm): VehicleInput => {
 	const input: VehicleInput = { plate: normalizePlate(form.plate) };

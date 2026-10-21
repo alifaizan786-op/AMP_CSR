@@ -15,6 +15,19 @@ export const addVehicle = (
 		body: JSON.stringify({ ...vehicle, plan }),
 	});
 
+// Sends the full set of details (an optional field left out is cleared), plus the version the
+// CSR loaded so a stale page can't overwrite a newer change (409)
+export const updateVehicle = (
+	customerId: string,
+	vehicleId: string,
+	vehicle: VehicleInput,
+	expectedVersion: number,
+) =>
+	request<Customer>(`/customers/${customerId}/vehicles/${vehicleId}`, {
+		method: 'PATCH',
+		body: JSON.stringify({ ...vehicle, expectedVersion }),
+	});
+
 // The server refuses (409) while the vehicle has an active or overdue membership
 export const removeVehicle = (customerId: string, vehicleId: string) =>
 	request<Customer>(`/customers/${customerId}/vehicles/${vehicleId}`, {

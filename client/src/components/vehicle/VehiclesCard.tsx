@@ -5,6 +5,8 @@ import type { Customer, Vehicle } from '../../types';
 import AddVehicleDialog from './AddVehicleDialog';
 import CancelMembershipDialog from './CancelMembershipDialog';
 import ChangePlanDialog from './ChangePlanDialog';
+import EditVehicleDialog from './EditVehicleDialog';
+
 import RemoveVehicleDialog from './RemoveVehicleDialog';
 import RetryPaymentDialog from './RetryPaymentDialog';
 import StartMembershipDialog from './StartMembershipDialog';
@@ -22,6 +24,8 @@ const VehiclesCard = ({ customer, onSaved, onStale }: VehiclesCardProps) => {
 	const [adding, setAdding] = useState(false);
 	// The vehicle being confirmed for removal; null when no confirm dialog is open
 	const [removing, setRemoving] = useState<Vehicle | null>(null);
+	// The vehicle whose details are being corrected
+	const [editing, setEditing] = useState<Vehicle | null>(null);
 	// The vehicle a membership is being started on
 	const [starting, setStarting] = useState<Vehicle | null>(null);
 	// The vehicle whose plan is being changed
@@ -71,6 +75,7 @@ const VehiclesCard = ({ customer, onSaved, onStale }: VehiclesCardProps) => {
 							onTransfer={setTransferring}
 							onCancel={setCancelling}
 							onRemove={setRemoving}
+							onEdit={setEditing}
 						/>
 					))}
 				</Stack>
@@ -146,6 +151,19 @@ const VehiclesCard = ({ customer, onSaved, onStale }: VehiclesCardProps) => {
 					onClose={() => setCancelling(null)}
 					onSaved={(message) => {
 						setCancelling(null);
+						onSaved(message);
+					}}
+					onStale={onStale}
+				/>
+			)}
+
+			{editing && (
+				<EditVehicleDialog
+					customer={customer}
+					vehicle={editing}
+					onClose={() => setEditing(null)}
+					onSaved={(message) => {
+						setEditing(null);
 						onSaved(message);
 					}}
 					onStale={onStale}

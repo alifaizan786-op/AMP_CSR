@@ -1,6 +1,7 @@
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
 import BlockIcon from '@mui/icons-material/Block';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
+import DirectionsCarOutlinedIcon from '@mui/icons-material/DirectionsCarOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -73,7 +74,7 @@ const ActionItem = ({
 			// focused from the keyboard, so they also need a visible focus state.
 			sx={{
 				'&.Mui-disabled': { opacity: 1 },
-								'&.Mui-disabled:focus-visible': { bgcolor: 'action.focus' },
+				'&.Mui-disabled:focus-visible': { bgcolor: 'action.focus' },
 				alignItems: 'flex-start',
 				whiteSpace: 'normal',
 			}}
@@ -100,6 +101,7 @@ interface VehicleRowProps {
 	onTransfer: (vehicle: Vehicle) => void;
 	onCancel: (vehicle: Vehicle) => void;
 	onRemove: (vehicle: Vehicle) => void;
+	onEdit: (vehicle: Vehicle) => void;
 }
 
 const VehicleRow = ({
@@ -110,6 +112,7 @@ const VehicleRow = ({
 	onTransfer,
 	onCancel,
 	onRemove,
+	onEdit,
 }: VehicleRowProps) => {
 	// The button the menu opens from; null means the menu is closed
 	const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -249,6 +252,11 @@ const VehicleRow = ({
 
 				<Divider />
 				<GroupLabel>Vehicle</GroupLabel>
+				<ActionItem
+					label='Edit vehicle details'
+					icon={<DirectionsCarOutlinedIcon fontSize='small' />}
+					onClick={runAction(onEdit)}
+				/>
 				<ActionItem
 					label='Remove vehicle'
 					icon={<DeleteOutlineIcon fontSize='small' />}

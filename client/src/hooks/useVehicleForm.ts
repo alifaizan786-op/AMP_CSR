@@ -2,9 +2,10 @@ import { useState } from 'react';
 import type { VehicleErrors, VehicleForm } from '../utils/vehicleForm';
 import { EMPTY_VEHICLE_FORM, validateVehicle } from '../utils/vehicleForm';
 
-// Form state shared by every dialog that collects a vehicle (add, transfer to a new car)
-const useVehicleForm = () => {
-	const [form, setForm] = useState<VehicleForm>(EMPTY_VEHICLE_FORM);
+// Form state shared by every dialog that collects a vehicle (add, edit, transfer to a new car).
+// Starts empty, or from a car's current details when editing.
+const useVehicleForm = (initial: VehicleForm = EMPTY_VEHICLE_FORM) => {
+	const [form, setForm] = useState<VehicleForm>(initial);
 	const [errors, setErrors] = useState<VehicleErrors>({});
 
 	const changeField = (field: keyof VehicleForm, value: string) => {
