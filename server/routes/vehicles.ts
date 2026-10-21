@@ -7,6 +7,7 @@ import {
 	removeVehicle,
 	retryPayment,
 	transferSubscription,
+	updateVehicle,
 } from '../controllers/vehicleController';
 
 // mergeParams lets these routes read :id from the parent customers router
@@ -14,6 +15,9 @@ const router = Router({ mergeParams: true });
 
 // POST /api/customers/:id/vehicles
 router.post('/', addVehicle);
+
+// PATCH /api/customers/:id/vehicles/:vehicleId
+router.patch('/:vehicleId', updateVehicle);
 
 // DELETE /api/customers/:id/vehicles/:vehicleId
 router.delete('/:vehicleId', removeVehicle);

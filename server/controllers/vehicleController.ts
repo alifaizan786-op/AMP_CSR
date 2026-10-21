@@ -62,6 +62,59 @@ export const addVehicle = async (
 	res.status(201).json(customer);
 };
 
+// The vehicle details a CSR can correct, with the labels used in the activity log
+const VEHICLE_FIELDS = [
+	['plate', 'Plate'],
+	['year', 'Year'],
+	['make', 'Make'],
+	['model', 'Model'],
+	['color', 'Color'],
+] as const;
+
+// PATCH /api/customers/:id/vehicles/:vehicleId
+// Corrects a car's details, e.g. a mistyped plate that stops the car being recognized at the wash.
+// The client sends the full set of details; an optional field left out is cleared.
+export const updateVehicle = async (
+	req: Request<VehicleParams>,
+	res: Response,
+) => {
+	const input = readVehicleInput(req.body);
+	const customer = await findCustomer(req.params.id);
+	assertVersion(customer, req.body.expectedVersion);
+	const vehicle = findVehicle(customer, req.params.vehicleId);
+
+	const changes: string[] = [];
+	for (let i = 0; i < VEHICLE_FIELDS.length; i++) {
+		const [field, label] = VEHICLE_FIELDS[i];
+		// Compare after setting, so the schema's plate normalization and trimming apply first
+		const before = vehicle[field];
+		vehicle.set(field, input[field]);
+		if (vehicle[field] !== before) {
+			changes.push(
+				`${label} changed from "${before ?? ''}" to "${vehicle[field] ?? ''}"`,
+			);
+		}
+	}
+
+	if (!changes.length) return res.json(customer);
+
+	// Same rule as adding a car: one plate appears once per account
+	for (let i = 0; i < customer.vehicles.length; i++) {
+		const other = customer.vehicles[i];
+		if (!other._id.equals(vehicle._id) && other.plate === vehicle.plate) {
+			throw new HttpError(409, `${vehicle.plate} is already on this account`);
+		}
+	}
+
+	await customer.save();
+	await logActivity(
+		customer._id,
+		`Updated vehicle ${vehicle.plate}: ${changes.join('; ')}`,
+	);
+
+	res.json(customer);
+};
+
 // DELETE /api/customers/:id/vehicles/:vehicleId
 export const removeVehicle = async (
 	req: Request<VehicleParams>,

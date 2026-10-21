@@ -13,10 +13,10 @@ npm run dev            # starts the API on http://localhost:3001
 
 ### Environment variables
 
-| Variable      | Description                                                         |
-| ------------- | ------------------------------------------------------------------- |
-| `MONGODB_URI` | MongoDB connection string, including the database name (`/amp_csr`) |
-| `PORT`        | Port for the API. Defaults to `3001`                                |
+| Variable      | Description                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MONGODB_URI` | MongoDB connection string, including the database name (`/amp_csr`)                                                                         |
+| `PORT`        | Port for the API. Defaults to `3001`                                                                                                        |
 | `DNS_SERVERS` | Optional. Comma-separated DNS servers for networks that can't resolve the Atlas address (e.g. `8.8.8.8,1.1.1.1`). Leave unset in production |
 
 ### Scripts
@@ -61,13 +61,13 @@ All endpoints are prefixed with `/api`. Errors return a JSON body with a `messag
 { "message": "Customer not found" }
 ```
 
-| Status | Meaning                                                                                                   |
-| ------ | --------------------------------------------------------------------------------------------------------- |
-| `400`  | Invalid input, such as a malformed id, an unknown status, a failed validation, or a body that isn't JSON |
-| `404`  | Resource not found                                                                                        |
+| Status | Meaning                                                                                                                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------- | --- |
+| `400`  | Invalid input, such as a malformed id, an unknown status, a failed validation, or a body that isn't JSON                  |
+| `404`  | Resource not found                                                                                                        |
 | `409`  | A business rule blocks the change (such as a duplicate plate), or another request changed the customer at the same moment |
-| `413`  | Request body over 100 KB                                                                                  |
-| `500`  | Unexpected server error                                                                                   |                               |
+| `413`  | Request body over 100 KB                                                                                                  |
+| `500`  | Unexpected server error                                                                                                   |     |
 
 ### Health check
 
@@ -81,12 +81,12 @@ All endpoints are prefixed with `/api`. Errors return a JSON body with a `messag
 
 `GET /api/customers`
 
-| Query param | Type   | Default | Description                                                                                                                                                     |
-| ----------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Query param | Type   | Default | Description                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `search`    | string |         | Matches first name, last name, email, license plate, or phone. With several words, every word must match the first or last name, in any order (so "Mary Ann Smith" works). Phone matching applies only when the search looks like a phone number (digits plus spaces, dashes, parentheses, `+`, or dots, with at least 3 digits); a leading US `+1` is ignored. Case-insensitive. |
-| `status`    | string |         | Filter by `active`, `overdue`, or `inactive`                                                                                                                    |
-| `page`      | number | `1`     | Page number                                                                                                                                                     |
-| `limit`     | number | `20`    | Results per page (max `100`)                                                                                                                                    |
+| `status`    | string |         | Filter by `active`, `overdue`, or `inactive`                                                                                                                                                                                                                                                                                                                                      |
+| `page`      | number | `1`     | Page number                                                                                                                                                                                                                                                                                                                                                                       |
+| `limit`     | number | `20`    | Results per page (max `100`)                                                                                                                                                                                                                                                                                                                                                      |
 
 Example: `GET /api/customers?search=404555&status=overdue&page=1`
 
@@ -186,17 +186,21 @@ Returns the full customer with vehicles and subscriptions, their purchase histor
 Send any of `firstName`, `lastName`, `email`, `phone`. Other fields are ignored; vehicles and subscriptions have their own endpoints. Each real change is recorded in the activity log.
 
 ```json
-{ "email": "jordan.m@example.com", "phone": "(470) 555-1212", "expectedVersion": 3 }
+{
+	"email": "jordan.m@example.com",
+	"phone": "(470) 555-1212",
+	"expectedVersion": 3
+}
 ```
 
 `expectedVersion` is required: the customer's `__v` as the client last loaded it. If the customer has changed since, the update is refused with `409`, so a stale page can't overwrite a newer change.
 
 Returns the updated customer.
 
-| Error | When                                                        |
-| ----- | ----------------------------------------------------------- |
-| `400` | Invalid id, a field isn't text, or a value fails validation |
-| `404` | Customer not found                                          |
+| Error | When                                                                                                                              |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `400` | Invalid id, a field isn't text, or a value fails validation                                                                       |
+| `404` | Customer not found                                                                                                                |
 | `409` | Email already belongs to another customer (the body includes `"field": "email"`), or the customer changed since `expectedVersion` |
 
 ### Add a note
@@ -248,6 +252,29 @@ Only `plate` is required. Include `plan` (`basic`, `deluxe`, or `ultimate`) to s
 | ----- | ------------------------------------------------------- |
 | `400` | Missing or invalid plate, invalid year, or unknown plan |
 | `409` | That plate is already on this account                   |
+
+### Update a vehicle
+
+`PATCH /api/customers/:id/vehicles/:vehicleId`
+
+```json
+{
+	"plate": "OVR1235",
+	"year": 2021,
+	"make": "Toyota",
+	"model": "Camry",
+	"color": "Red",
+	"expectedVersion": 3
+}
+```
+
+Corrects a vehicle's details, for example a mistyped plate that stops the car being recognized at the wash. Send the full set of details: an optional field that's left out is cleared. The membership stays on the vehicle, and past purchases keep the plate they were charged under. Each change is recorded in the activity log. `expectedVersion` is required, as for account updates.
+
+| Error | When                                                                                   |
+| ----- | -------------------------------------------------------------------------------------- |
+| `400` | Missing or invalid plate, invalid year, or missing `expectedVersion`                   |
+| `404` | Customer or vehicle not found                                                          |
+| `409` | That plate is already on this account, or the customer changed since `expectedVersion` |
 
 ### Remove a vehicle
 
