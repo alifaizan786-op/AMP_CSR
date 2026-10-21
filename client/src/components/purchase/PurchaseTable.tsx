@@ -13,7 +13,7 @@ import {
 import { useState } from 'react';
 import type { Purchase } from '../../types';
 import { formatDate, formatMoney } from '../../utils/format';
-import RefundPurchaseDialog from '../purchase/RefundPurchaseDialog';
+import RefundPurchaseDialog from './RefundPurchaseDialog';
 
 // Keeps long histories from pushing the rest of the page down; the CSR can expand on demand
 const INITIAL_ROWS = 10;

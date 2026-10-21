@@ -1,7 +1,7 @@
 import { Typography } from '@mui/material';
 import { useState } from 'react';
 import { describeWriteError } from '../../api/client';
-import { refundPurchase } from '../../api/customers';
+import { refundPurchase } from '../../api/purchases';
 import type { Purchase } from '../../types';
 import { formatMoney } from '../../utils/format';
 import FormDialog from '../FormDialog';

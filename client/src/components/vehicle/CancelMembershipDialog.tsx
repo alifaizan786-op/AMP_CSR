@@ -6,6 +6,7 @@ import PLANS from '../../constants/plans';
 import type { Customer, Vehicle } from '../../types';
 import { formatMoney } from '../../utils/format';
 import FormDialog from '../FormDialog';
+import ReasonField from '../ReasonField';
 
 interface CancelMembershipDialogProps {
 	customer: Customer;

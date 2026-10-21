@@ -7,6 +7,7 @@ import type { Customer } from '../../types';
 import { formatMoney, fullName } from '../../utils/format';
 import { hasLiveMembership } from '../../utils/vehicleForm';
 import FormDialog from '../FormDialog';
+import ReasonField from '../ReasonField';
 import StatusChip from '../StatusChip';
 
 interface CancelAccountDialogProps {

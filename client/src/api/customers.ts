@@ -5,7 +5,6 @@ import type {
 	CustomerDetailResponse,
 	CustomerListResponse,
 	CustomerStatus,
-	Purchase,
 } from '../types';
 import { request } from './client';
 
@@ -55,17 +54,6 @@ export const addNote = (customerId: string, message: string) =>
 // Cancels every active and overdue membership in one request; the account and its history stay
 export const cancelAccount = (id: string, reason: string) =>
 	request<Customer>(`/customers/${id}/cancel`, {
-		method: 'POST',
-		body: JSON.stringify({ reason }),
-	});
-
-// Full refund of a paid charge; returns the updated purchase
-export const refundPurchase = (
-	customerId: string,
-	purchaseId: string,
-	reason: string,
-) =>
-	request<Purchase>(`/customers/${customerId}/purchases/${purchaseId}/refund`, {
 		method: 'POST',
 		body: JSON.stringify({ reason }),
 	});
